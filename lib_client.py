@@ -22,3 +22,4 @@ def connect_guest(sock, account_name, status = 'Yep, I am here'):
     msg_server = sock.recv(2048)
     msg_server = json.loads(msg_server.decode())
     print(msg_server)
+    return msg_server

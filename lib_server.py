@@ -7,7 +7,7 @@ msg_server = {
     'allert': ''
 }
 
-def presence(self, account_name, status):
+def presence(self, account_name):
 
     if account_name in clients:
         msg_server['responce'] = '409'
@@ -22,6 +22,7 @@ def presence(self, account_name, status):
         data = json.dumps(msg_server).encode()
         self.request.send(data)
 
+    return msg_server
 
 def quit(self, account_name):
     pass

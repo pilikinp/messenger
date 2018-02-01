@@ -84,9 +84,7 @@ while True:
     msg = sock.recv(2048)
     msg = json.loads(msg.decode())
     commands[msg['action']](sock, msg['user']['account_name'], msg['user']['status'])
-# list['sock {}'.format(i)]= sock
-# list['addr {}'.format(i)]= addr
-# i += 1
+
 
 
 

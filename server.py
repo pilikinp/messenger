@@ -22,7 +22,7 @@ class CHandler(socketserver.BaseRequestHandler):
 
         msg = self.request.recv(2048)
         msg = json.loads(msg.decode())
-        commands[msg['action']](self, msg['user']['account_name'], msg['user']['status'])
+        commands[msg['action']](self, msg['user']['account_name'])
 
 
 

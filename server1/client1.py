@@ -5,7 +5,6 @@ import threading
 import json
 import time
 
-from lib_client import connect_guest
 
 if len(sys.argv) == 1:
     adr = '127.0.0.1'
@@ -80,6 +79,7 @@ connect_guest(sock, 'pilik')
 
 t1 = threading.Thread(target=writ)
 t2 = threading.Thread(target=rec)
+
 t1.start()
 t2.start()
 t1.join()
