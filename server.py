@@ -1,31 +1,21 @@
-import sys
-import socketserver
-import json
-
-from lib_server import presence
-
-if len(sys.argv) == 1:
-    adr = ''
-    port = 7777
-else:
-    adr, port = sys.argv[1], int(sys.argv[2])
+from lib_server import main_loop
 
 
-class CHandler(socketserver.BaseRequestHandler):
-
-    def handle(self):
-
-        commands = {
-            'presence': presence
-        }
-
-
-        msg = self.request.recv(2048)
-        msg = json.loads(msg.decode())
-        commands[msg['action']](self, msg['user']['account_name'])
+# server_sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto = 0) # TCP
+# server_sock.bind(("", 7771))
+# server_sock.listen(5)
 
 
 
-with socketserver.TCPServer((adr , port), CHandler) as server:
 
-    server.serve_forever()
+# while True:
+#     sock, addr = server_sock.accept()
+#     msg = sock.recv(2048)
+#     msg = json.loads(msg.decode())
+#     commands[msg['action']](sock, msg['user']['account_name'], msg['user']['status'])
+
+
+
+
+
+main_loop()

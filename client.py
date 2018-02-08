@@ -1,16 +1,28 @@
-import sys
-import socket
+import argparse
 
-from lib_client import connect_guest
+from lib_client import chat, chat2
 
-if len(sys.argv) == 1:
-    adr = '127.0.0.1'
-    port = 7777
+parser = argparse.ArgumentParser()
+
+parser.add_argument('--ip',type = str, default= '127.0.0.1', help = 'our ip')
+parser.add_argument('--port', type = int, default= 7771, help = 'our port')
+parser.add_argument('-w', action = 'store_true')
+parser.add_argument('-r', action = 'store_true')
+
+args = parser.parse_args()
+
+
+if args.w:
+    chat(args.ip, args.port)
+elif args.r:
+    chat2(args.ip, args.port)
 else:
-    adr, port = sys.argv[1], int(sys.argv[2])
+    print('не задан обязательный аргумент')
 
-sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto= 0)
-sock.connect((adr, port))
 
-connect_guest(sock, 'pilik')
+
+
+
+
+
 

@@ -3,8 +3,7 @@ import unittest
 from unittest.mock import Mock
 import time
 
-import lib_server
-import lib_client
+from old_serv import lib_server, lib_client
 
 
 class CtestLibServer(unittest.TestCase):
