@@ -56,9 +56,10 @@ def mainloop():
             except:
                 pass
             req = read_requests(r)
-            print(req)
-            if req is not None:
-                write_responses(req, clients)
+            print(type(req))
+
+
+            write_responses(req, clients)
 
 print('Сервер запущен')
 mainloop()

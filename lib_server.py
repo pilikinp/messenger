@@ -65,7 +65,7 @@ def read(cl):
             app_log.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
             clients_list.remove(sock)
             print('текущий лист', clients_list)
-        return requests
+    return requests
 
 def write(requests, cl):
     for sock in clients_list:
@@ -93,7 +93,7 @@ commands = {
 
 def main_loop():
     server_sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto = 0) # TCP
-    server_sock.bind(("", 7771))
+    server_sock.bind(("", 7777))
     server_sock.listen(5)
     server_sock.settimeout(0.2)
 
