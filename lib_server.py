@@ -80,7 +80,7 @@ def write(requests, cl):
                     app_log.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
                     clients_list.remove(sock)
 
-
+1234567898765432123456789
 
 
 
