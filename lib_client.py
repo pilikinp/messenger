@@ -17,10 +17,16 @@ def connect_guest(sock, account_name, status = 'Yep, I am here'):
     }
     data = json.dumps(msg_client).encode()
     sock.send(data)
-
     msg_server = sock.recv(2048)
     msg_server = json.loads(msg_server.decode())
-    print(msg_server)
+    if msg_server['responce'] == '200':
+        print(msg_server)
+    elif msg_server['responce'] == '409':
+        print('Данный ник занят')
+        sys.exit()
+    else:
+        print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_server['responce']))
+        sys.exit()
 
 # def chat(addr, port, account_name = 'pilik'):
 #     with socket(AF_INET, SOCK_STREAM) as sock:
@@ -34,7 +40,7 @@ def connect_guest(sock, account_name, status = 'Yep, I am here'):
 #             data = sock.recv(1024).decode()
 #             print(data)
 
-def chat(addr, port, account_name = 'pilik'):
+def chat(addr, port, account_name):
     with socket(AF_INET, SOCK_STREAM) as sock:
         sock.connect((addr, port))
         connect_guest(sock, account_name)
@@ -50,14 +56,13 @@ def chat(addr, port, account_name = 'pilik'):
             data = input('Ваше сообщение: ')
             if data == 'exit':
                 break
-            print(data)
             msg_client['from'] = account_name
             msg_client['time'] = time.time()
             msg_client['message'] = data
             msg = json.dumps(msg_client).encode()
             sock.send(msg)
 
-def chat2(addr, port, account_name = 'pilik'):
+def chat2(addr, port, account_name):
     with socket(AF_INET, SOCK_STREAM) as sock:
         sock.connect((addr, port))
         connect_guest(sock, account_name)

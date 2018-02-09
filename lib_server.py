@@ -39,19 +39,20 @@ def presence(sock, account_name, status):
         clients[account_name] = sock
         data = json.dumps(msg_server).encode()
         sock.send(data)
+        clients_list.append(sock)
         app_log.debug('send presence')
 
-def msg(sock, to, from_, message):
-
-    if to in clients:
-        data = json.dumps(message).encode()
-        clients[to].send(data)
-    else:
-        msg_server['responce'] = '404'
-        msg_server['allert'] = 'Not found'
-        msg_server['time'] = time.time()
-        data = json.dumps(msg_server).encode()
-        sock.send(data)
+# def msg(sock, to, from_, message):
+#
+#     if to in clients:
+#         data = json.dumps(message).encode()
+#         clients[to].send(data)
+#     else:
+#         msg_server['responce'] = '404'
+#         msg_server['allert'] = 'Not found'
+#         msg_server['time'] = time.time()
+#         data = json.dumps(msg_server).encode()
+#         sock.send(data)
 
 def read(cl):
     requests = {}
@@ -59,7 +60,7 @@ def read(cl):
         try:
             data = sock.recv(1024)
             requests[sock] = data
-        except:
+        except:   # конкретизировать исключение возникающее при отключении клиента
             print ('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
             app_log.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
             clients_list.remove(sock)
@@ -74,7 +75,7 @@ def write(requests, cl):
             for sock in cl:
                 try:
                     sock.send(resp)
-                except:
+                except: # конкретизировать исключение возникающее при отключении клиента
                     print('Клиент {} отключился'.format(sock.fileno()))
                     app_log.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
                     clients_list.remove(sock)
@@ -85,7 +86,7 @@ def write(requests, cl):
 
 commands = {
     'presence': presence,
-    'msg': msg
+    'msg': 'msg'
 }
 
 
@@ -103,8 +104,6 @@ def main_loop():
         except OSError as e:
             pass                                                                  #timeout вышел
         else:
-            clients_list.append(sock)
-            print(clients_list)
             msg = sock.recv(2048)
             msg = json.loads(msg.decode())
             commands[msg['action']](sock, msg['user']['account_name'], msg['user']['status'])
@@ -115,7 +114,7 @@ def main_loop():
             try:
                 r, w, e = select.select(clients_list, clients_list, [], wait)
             except:
-                pass
+                pass #сделать обработку ошибок
             print(clients_list)
             req = read(r)
             if req is not None:
