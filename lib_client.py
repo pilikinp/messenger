@@ -1,7 +1,7 @@
 import time
 import json
 from socket import *
-from multiprocessing import Process
+
 
 
 
@@ -28,17 +28,6 @@ def connect_guest(sock, account_name, status = 'Yep, I am here'):
         print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_server['responce']))
         sys.exit()
 
-# def chat(addr, port, account_name = 'pilik'):
-#     with socket(AF_INET, SOCK_STREAM) as sock:
-#         sock.connect((addr, port))
-#         connect_guest(sock, account_name)
-#         while True:
-#             msg = input('Ваше сообщение: ')
-#             if msg == 'exit':
-#                 break
-#             sock.send(msg.encode())
-#             data = sock.recv(1024).decode()
-#             print(data)
 
 def chat(addr, port, account_name):
     with socket(AF_INET, SOCK_STREAM) as sock:
@@ -70,22 +59,3 @@ def chat2(addr, port, account_name):
             data = sock.recv(1024)
             msg_serv = json.loads(data.decode())
             print(msg_serv['time'], msg_serv['from'], msg_serv['message'])
-#
-# def rec(sock):
-#     while True:
-#         data = sock.recv(1024)
-#         data = json.loads(data.decode())
-#         print(data)
-#
-# def writ(sock):
-#     while True:
-#         print('введите получателя')
-#         to = input()
-#         print('введите сообщение')
-#         msg = input()
-#         if msg == 'exit':
-#             break
-#         msg_client1["to"] = to
-#         msg_client1['message'] = msg
-#         data = json.dumps(msg).encode()
-#         sock.send(data)
