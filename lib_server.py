@@ -11,7 +11,7 @@ from lib_decoratorr import log
 app_log = logging.getLogger('app')
 
 msg_server = {
-    'responce': '',
+    'response': '',
     'time': '',
     'allert': ''
 }
@@ -20,10 +20,10 @@ clients = {}
 clients_list = []
 
 @log
-def presence(sock, account_name, status):
+def presence(sock, account_name):
 
     if account_name in clients:
-        msg_server['responce'] = '409'
+        msg_server['response'] = '409'
         msg_server['time'] = time.time()
         msg_server['allert'] = 'Conflict'
         data = json.dumps(msg_server).encode()
@@ -33,7 +33,7 @@ def presence(sock, account_name, status):
 
 
     else:
-        msg_server['responce'] = '200'
+        msg_server['response'] = '200'
         msg_server['time'] = time.time()
         msg_server['allert'] = 'Connection'
         clients[account_name] = sock
@@ -106,7 +106,8 @@ def main_loop():
         else:
             msg = sock.recv(2048)
             msg = json.loads(msg.decode())
-            commands[msg['action']](sock, msg['user']['account_name'], msg['user']['status'])
+            print(msg)
+            commands[msg['action']](sock, msg['user'])
         finally:
             wait = 0
             r = []
