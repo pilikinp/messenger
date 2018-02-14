@@ -1,3 +1,7 @@
-from lib_server import main_loop
+# from lib_server import main_loop
+#
+# main_loop()
+import models
 
-main_loop()
+server = models.Server(host='')
+server.main_loop()

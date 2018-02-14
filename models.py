@@ -1,7 +1,9 @@
-import time
+import sys, time
 import json
-import socket
-import sys
+import socket, select
+import logging
+
+from lib_decoratorr import log
 # from socket import *
 
 
@@ -232,7 +234,7 @@ class Client():
         with self.socket as sock:
             sock.connect((self._host, self._port))
             self.connect_guest()
-            msg_client = JimMessage(action='msg', user='pilik')
+            msg_client = JimMessage(action='msg')
 
             while True:
                 data = input('Ваше сообщение: ')
@@ -265,5 +267,124 @@ class Chat:
     pass
 
 class Server():
-    def __init__(self):
-        pass
+
+    clients = {}
+    clients_list = []
+    msg_server = {
+        'response': '',
+        'time': '',
+        'allert': ''
+    }
+
+
+    def __init__(self, host = '', port = 7777, clients = 5):
+        self._host = host
+        self._port = port
+        self._sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto = 0)
+        self._sock.bind((host, port))
+        self._sock.listen(clients)
+        self._logger = logging.getLogger('app')
+        self.commands = {
+            'presence': self.presence,
+            'msg': 'msg'
+        }
+
+
+
+
+    @log
+    def presence(self, sock, account_name):
+
+        if account_name in self.clients:
+            msg_server = JimAnswer(response= '000')
+            msg_server.response = '409'
+            msg_server.time = time.time()
+            msg_server.alert
+            data = msg_server.msg()
+            data = msg_server.pack(data)
+            sock.send(data)
+            self._logger.debug('send error 409')
+
+
+
+        else:
+            msg_server = JimAnswer(response='000')
+            msg_server.response = '200'
+            msg_server.time = time.time()
+            msg_server.alert
+            data = msg_server.msg()
+            data = msg_server.pack(data)
+            sock.send(data)
+            self.clients_list.append(sock)
+            self._logger.debug('send presence')
+
+
+    # def msg(sock, to, from_, message):
+    #
+    #     if to in clients:
+    #         data = json.dumps(message).encode()
+    #         clients[to].send(data)
+    #     else:
+    #         msg_server['responce'] = '404'
+    #         msg_server['allert'] = 'Not found'
+    #         msg_server['time'] = time.time()
+    #         data = json.dumps(msg_server).encode()
+    #         sock.send(data)
+
+    def read(self, cl):
+        requests = {}
+        for sock in cl:
+            try:
+                data = sock.recv(1024)
+                requests[sock] = data
+            except:  # конкретизировать исключение возникающее при отключении клиента
+                print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
+                self._logger.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
+                self.clients_list.remove(sock)
+                print('текущий лист', self.clients_list)
+        return requests
+
+    def write(self, requests, cl):
+        for sock in self.clients_list:
+            if sock in requests:
+                resp = requests[sock]
+                print(resp)
+                for sock in cl:
+                    try:
+                        sock.send(resp)
+                    except:  # конкретизировать исключение возникающее при отключении клиента
+                        print('Клиент {} отключился'.format(sock.fileno()))
+                        self._logger.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
+                        self.clients_list.remove(sock)
+
+    def main_loop(self):
+        self._sock.settimeout(0.2)
+
+        while True:
+            try:
+                sock, addr = self._sock.accept()
+            except OSError as e:
+                print('timeout вышел')  # timeout вышел
+            else:
+                msg = sock.recv(2048)
+                msg_client = JimMessage(action= 'presence')
+                msg = msg_client.unpack(msg)
+                print(msg)
+                self.commands[msg['action']](sock, msg['user'])
+            finally:
+                wait = 0
+                r = []
+                w = []
+                try:
+                    r, w, e = select.select(self.clients_list, self.clients_list, [], wait)
+                except:
+                    pass  # сделать обработку ошибок
+                print(self.clients_list)
+                req = self.read(r)
+                self.write(req, w)
+
+    # def rec(sock):
+    #     while True:
+    #         msg = sock.recv(2048)
+    #         msg = json.loads(msg.decode())
+    #         commands[msg['action']](sock, msg['to'],msg['from'], msg['message'])
