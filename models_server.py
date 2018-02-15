@@ -43,10 +43,21 @@ class Server(FilesRepository):
 
     def read(self, cl):
         requests = {}
+        msg = JimMessage(action='')
         for sock in cl:
             try:
                 data = sock.recv(1024)
-                requests[sock] = data
+                msg_client = msg.unpack(data)
+                print(msg)
+                if msg_client['to'] in self.clients_dict:
+                    self.clients_dict[msg_client['to']].send(data)
+                elif msg_client['to'] == '':
+                    requests[sock] = data
+                else:
+                    msg_client['message'] = 'Пользователя с таким ником не найдено'
+                    data = msg.pack(msg_client)
+                    sock.send(data)
+                print(requests)
             except ConnectionResetError:
                 print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
                 for key, value in self.clients_dict.items():
@@ -73,7 +84,8 @@ class Server(FilesRepository):
             try:
                 sock, addr = self._sock.accept()
             except OSError as e:
-                print('timeout вышел')  # timeout вышел
+                pass
+                # print('timeout вышел')  # timeout вышел
             else:
                 msg = sock.recv(2048)
                 msg_client = JimMessage(action= 'presence')

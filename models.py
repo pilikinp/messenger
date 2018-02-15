@@ -4,8 +4,37 @@ import socket
 import logging
 
 
+class Repository:
 
-class JimMessage:
+    def __init__(self, clients_dict = {}, clients_list = [] ):
+        self.clients_dict = clients_dict
+        self.clients_list = clients_list
+
+    def add_user(self, user, sock):
+        self.clients_dict[user] = sock
+        self.clients_list.append(sock)
+
+    def del_user(self, user, sock):
+        del(self.clients_dict[user])
+        self.clients_list.remove(sock)
+
+
+class FilesRepository(Repository):
+
+    def __init__(self, clients_dict = {}, clients_list =[]):
+        super().__init__(clients_dict, clients_list)
+        self._logger = logging.getLogger('app')
+
+    def add_user(self, user, sock):
+        super().add_user(user,sock)
+        self._logger.info('User {} login'.format(user))
+
+    def del_user(self, user, sock):
+        super().del_user(user, sock)
+        self._logger.info('User {} logout'.format(user))
+
+
+class JimMessage():
 
     action_dict = {
         'presence': 'Присутствие',
@@ -35,7 +64,7 @@ class JimMessage:
     def action(self, value):
 
         if value in self.action_dict:
-            print('записываю')
+            print('отправляю')
             self._action = value
         else:
             print('Не правильно задана команда')
@@ -55,10 +84,7 @@ class JimMessage:
 
     @to.setter
     def to(self, value):
-        if value in ['']:
-            self._to = value
-        else:
-            print('Пользователя с таким именем нет')
+        self._to = value
 
     @property
     def from_(self):
@@ -172,12 +198,6 @@ class JimAnswer():
                 'alert': self.alert}
         return msg
 
-    # def pack(self):
-    #     return super().pack()
-    #
-    # def unpack(self, data):
-    #     msg = super().unpack(data)
-    #     self.response = msg['responce']
     def pack(self, msg):
         '''Упаковываем сообщение'''
         data = json.dumps(msg).encode()
@@ -195,30 +215,3 @@ class Chat:
     pass
 
 
-class Repository:
-
-    def __init__(self, clients_dict = {}, clients_list = [] ):
-        self.clients_dict = clients_dict
-        self.clients_list = clients_list
-
-    def add_user(self, user, sock):
-        self.clients_dict[user] = sock
-        self.clients_list.append(sock)
-
-    def del_user(self, user, sock):
-        del(self.clients_dict[user])
-        self.clients_list.remove(sock)
-
-class FilesRepository(Repository):
-
-    def __init__(self, clients_dict = {}, clients_list =[]):
-        super().__init__(clients_dict, clients_list)
-        self._logger = logging.getLogger('app')
-
-    def add_user(self, user, sock):
-        super().add_user(user,sock)
-        self._logger.info('User {} login'.format(user))
-
-    def del_user(self, user, sock):
-        super().del_user(user, sock)
-        self._logger.info('User {} logout'.format(user))
