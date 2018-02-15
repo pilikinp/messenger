@@ -1,10 +1,8 @@
 import sys, time
 import json
-import socket, select
+import socket
 import logging
 
-from lib_decoratorr import log
-# from socket import *
 
 
 class JimMessage:
@@ -191,200 +189,36 @@ class JimAnswer():
         return msg
 
 
-
-class Client():
-
-    def __init__(self, username, host, port):
-        self._username = username
-        # self._password = password
-        self._host = host
-        self._port = port
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-
-    @property
-    def socket(self):
-        return self._sock
-
-    def connect_guest(self):
-
-        msg_client = JimMessage(action='presence')
-        print(msg_client.user)
-        msg_client.user = (self._username)
-        data = msg_client.msg()
-        # print(data)
-        self.socket.send(msg_client.pack(data))
-        msg_server = JimAnswer(response='000')
-        msg_recv = self.socket.recv(1024)
-        msg_recv = msg_server.unpack(msg_recv)
-        print(msg_recv)
-        msg_server.response = msg_recv['response']
-        msg_server.time = msg_recv['time']
-
-        if msg_server.response == '200':
-            print(msg_server.alert)
-        elif msg_server.response == '409':
-            print(msg_server.alert)
-            sys.exit()
-        else:
-            print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_server.response))
-            sys.exit()
-
-    def _send_message(self):
-        with self.socket as sock:
-            sock.connect((self._host, self._port))
-            self.connect_guest()
-            msg_client = JimMessage(action='msg')
-
-            while True:
-                data = input('Ваше сообщение: ')
-                if data == 'exit':
-                    break
-                msg_client.from_ = self._username
-                msg_client.time
-                msg_client.message = data
-                msg_client.action = 'msg'
-                msg = msg_client.msg()
-                msg = msg_client.pack(msg)
-                sock.send(msg)
-
-    def _get_message(self):
-        with self.socket as sock:
-            sock.connect((self._host, self._port))
-            self.connect_guest()
-            msg_server = JimMessage()
-            while True:
-                data = sock.recv(1024)
-                data = msg_server.unpack(data)
-                msg_server.from_ = data['from']
-                msg_server.time = data['time']
-                msg_server.message = data['message']
-                print(data['time'], msg_server.from_, msg_server.message)
-
-
 class Chat:
-    '''Пока не понял что требуется реализовать в данном классе. Может быть функции отправки и получения сообщений'''
+    '''Пока не понял, что требуется реализовать в данном классе. Может быть функции отправки и получения сообщений,
+    а в клиенте оставить только соединение с сервером'''
     pass
 
-class Server():
 
-    clients = {}
-    clients_list = []
-    msg_server = {
-        'response': '',
-        'time': '',
-        'allert': ''
-    }
+class Repository:
 
+    def __init__(self, clients_dict = {}, clients_list = [] ):
+        self.clients_dict = clients_dict
+        self.clients_list = clients_list
 
-    def __init__(self, host = '', port = 7777, clients = 5):
-        self._host = host
-        self._port = port
-        self._sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto = 0)
-        self._sock.bind((host, port))
-        self._sock.listen(clients)
+    def add_user(self, user, sock):
+        self.clients_dict[user] = sock
+        self.clients_list.append(sock)
+
+    def del_user(self, user, sock):
+        del(self.clients_dict[user])
+        self.clients_list.remove(sock)
+
+class FilesRepository(Repository):
+
+    def __init__(self, clients_dict = {}, clients_list =[]):
+        super().__init__(clients_dict, clients_list)
         self._logger = logging.getLogger('app')
-        self.commands = {
-            'presence': self.presence,
-            'msg': 'msg'
-        }
 
+    def add_user(self, user, sock):
+        super().add_user(user,sock)
+        self._logger.info('User {} login'.format(user))
 
-
-
-    @log
-    def presence(self, sock, account_name):
-
-        if account_name in self.clients:
-            msg_server = JimAnswer(response= '000')
-            msg_server.response = '409'
-            msg_server.time = time.time()
-            msg_server.alert
-            data = msg_server.msg()
-            data = msg_server.pack(data)
-            sock.send(data)
-            self._logger.debug('send error 409')
-
-
-
-        else:
-            msg_server = JimAnswer(response='000')
-            msg_server.response = '200'
-            msg_server.time = time.time()
-            msg_server.alert
-            data = msg_server.msg()
-            data = msg_server.pack(data)
-            sock.send(data)
-            self.clients_list.append(sock)
-            self._logger.debug('send presence')
-
-
-    # def msg(sock, to, from_, message):
-    #
-    #     if to in clients:
-    #         data = json.dumps(message).encode()
-    #         clients[to].send(data)
-    #     else:
-    #         msg_server['responce'] = '404'
-    #         msg_server['allert'] = 'Not found'
-    #         msg_server['time'] = time.time()
-    #         data = json.dumps(msg_server).encode()
-    #         sock.send(data)
-
-    def read(self, cl):
-        requests = {}
-        for sock in cl:
-            try:
-                data = sock.recv(1024)
-                requests[sock] = data
-            except:  # конкретизировать исключение возникающее при отключении клиента
-                print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
-                self._logger.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
-                self.clients_list.remove(sock)
-                print('текущий лист', self.clients_list)
-        return requests
-
-    def write(self, requests, cl):
-        for sock in self.clients_list:
-            if sock in requests:
-                resp = requests[sock]
-                print(resp)
-                for sock in cl:
-                    try:
-                        sock.send(resp)
-                    except:  # конкретизировать исключение возникающее при отключении клиента
-                        print('Клиент {} отключился'.format(sock.fileno()))
-                        self._logger.warning('client logout {} {}'.format(sock.fileno(), sock.getpeername()))
-                        self.clients_list.remove(sock)
-
-    def main_loop(self):
-        self._sock.settimeout(0.2)
-
-        while True:
-            try:
-                sock, addr = self._sock.accept()
-            except OSError as e:
-                print('timeout вышел')  # timeout вышел
-            else:
-                msg = sock.recv(2048)
-                msg_client = JimMessage(action= 'presence')
-                msg = msg_client.unpack(msg)
-                print(msg)
-                self.commands[msg['action']](sock, msg['user'])
-            finally:
-                wait = 0
-                r = []
-                w = []
-                try:
-                    r, w, e = select.select(self.clients_list, self.clients_list, [], wait)
-                except:
-                    pass  # сделать обработку ошибок
-                print(self.clients_list)
-                req = self.read(r)
-                self.write(req, w)
-
-    # def rec(sock):
-    #     while True:
-    #         msg = sock.recv(2048)
-    #         msg = json.loads(msg.decode())
-    #         commands[msg['action']](sock, msg['to'],msg['from'], msg['message'])
+    def del_user(self, user, sock):
+        super().del_user(user, sock)
+        self._logger.info('User {} logout'.format(user))

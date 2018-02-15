@@ -6,7 +6,7 @@ import time
 
 
 from lib_decoratorr import log
-
+import log_config
 
 app_log = logging.getLogger('app')
 
