@@ -52,7 +52,7 @@ class Client():
                         'для общего чата')
             data = input('введите текст сообщения')
             if data == 'exit':
-                break
+                sys.exit()
             msg_client.from_ = self._username
             msg_client.time
             msg_client.to = to_
