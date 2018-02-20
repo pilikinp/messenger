@@ -36,101 +36,56 @@ class FilesRepository(Repository):
 
 class JimMessage():
 
-    action_dict = {
-        'presence': 'Присутствие',
-        'probe': 'проверка присутствия',
-        'msg': 'простое сообщение пользователю или в чат',
-        'quit': 'отключение от сервера',
-        'authenticate': 'авторизация',
-        'join': 'присоединиться к чата',
-        'leave': 'покинуть чат'
-    }
+    # action_dict = {
+    #     'registration': 'Регистрация',
+    #     'presence': 'Присутствие',
+    #     'probe': 'проверка присутствия',
+    #     'msg': 'простое сообщение пользователю или в чат',
+    #     'quit': 'отключение от сервера',
+    #     'authenticate': 'авторизация',
+    #     'join': 'присоединиться к чата',
+    #     'leave': 'покинуть чат'
+    # }
 
-    def __init__(self, action = 'action', time = time.ctime(), to = '', from_ = '', message = '', user = ''):
-        self._action = action
-        self._time = time
-        self._to = to
-        self._from = from_
-        self._message = message
-        self._encoding = 'ancii'
-        # self._status = None
-        self._user = user
-
-    @property
-    def action(self):
-        return self._action
-
-    @action.setter
-    def action(self, value):
-
-        if value in self.action_dict:
-            print('отправляю')
-            self._action = value
-        else:
-            print('Не правильно задана команда')
-
-    @property
-    def time(self):
-        self._time = time.ctime()
-        return self._time
-
-    @time.setter
-    def time(self, value):
-        self._time = value
-
-    @property
-    def to(self):
-        return self._to
-
-    @to.setter
-    def to(self, value):
-        self._to = value
-
-    @property
-    def from_(self):
-        return self._from
-
-    @from_.setter
-    def from_(self, value):
-        self._from = value
-
-    @property
-    def message(self):
-        return self._message
-
-    @message.setter
-    def message(self, value):
-        self._message = value
-
-    # @property
-    # def status(self):
-    #     return self._status
-    #
-    # @status.setter
-    # def status(self, value):
-    #     self._status = value
-
-    @property
-    def user(self):
-        return self._user
-
-    @user.setter
-    def user(self, value):
-        self._user = value
-
-    def msg(self):
+    def msg(self, action, username):
         '''Создаем словарь-сообщение для упаковки в JSON'''
-        if self.action == 'presence':
-            msg = {'action': self.action,
-                   'time': self.time,
-                    'user': self.user}
-        elif self.action == 'msg':
-            msg = {'action': self.action,
-                   'time': self.time,
-                   'to': self.to,
-                   'from': self.from_,
-                   'encoding': self._encoding,
-                   'message': self.message}
+        if action == 'presence':
+            msg = {'action': action,
+                   'time': time.ctime(),
+                    'user': username}
+        elif action == 'msg':
+            to_ = ''
+            message = input('Введите сообщение: ')
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'to': to_,
+                   'from': username,
+                   'message': message}
+        elif action == 'msg_to':
+            to_ = input('Введите адресата: ')
+            if to_ :
+                message = input('Введите сообщение: ')
+                msg = {'action': 'msg',
+                       'time': time.ctime(),
+                       'to': to_,
+                       'from': username,
+                       'message': message}
+            else:
+                msg = {'action': 'msg',
+                       'time': time.ctime(),
+                       'to': username,
+                       'from': username,
+                       'message': 'Вы не ввели адресата'}
+        elif action == 'registration':
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username}
+        elif action == 'get_contact_list':
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username}
+        else:
+            sys.exit()
         return msg
 
     def pack(self, msg):
@@ -144,7 +99,7 @@ class JimMessage():
         return data
 
 
-class JimAnswer():
+class JimAnswer(JimMessage):
 
     code = {
         '100': 'Базовое уведомление',
@@ -156,57 +111,21 @@ class JimAnswer():
         '401': 'Не авторизован',
         '402': 'Не правильный логин/пароль',
         '403': 'Пользователь заблокирован',
-        '404': 'Пользователь/чат отсутствует на месте',
+        '404': 'Пользователь/чат отсутствует',
         '409': 'Уже имеется подключение с указанным логином',
         '410': 'Адресат существует, но не доступен',
         '500': 'Ошибка сервера'
     }
 
-    def __init__(self, response = '000', time = time.ctime(), alert = ''):
-        self._response = response
-        self._time = time
-        self._alert = alert
 
-    @property
-    def response(self):
-        return self._response
-
-    @response.setter
-    def response(self, value):
-        if value in self.code:
-            self._response = value
-        else:
-            print('Нет такого кода')
-
-    @property
-    def time(self):
-        self._time = time.ctime()
-        return self._time
-
-    @time.setter
-    def time(self, value):
-        self._time = value
-
-    @property
-    def alert(self):
-        self._alert = self.code[self._response]
-        return self._alert
-
-    def msg(self):
-        msg = {'response': self.response,
-                'time': self.time,
-                'alert': self.alert}
+    def msg(self, code, quantity = ''):
+        msg = {'response': code,
+                'time': time.ctime(),
+                'alert': self.code[code],
+               'quantity': quantity}
         return msg
 
-    def pack(self, msg):
-        '''Упаковываем сообщение'''
-        data = json.dumps(msg).encode()
-        return data
 
-    def unpack(self, data):
-        '''Распаковка сообщения'''
-        msg = json.loads(data.decode())
-        return msg
 
 
 class Chat:

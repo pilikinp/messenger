@@ -1,0 +1,53 @@
+2018-02-14 16:29:51,216 - WARNING - models - read - client logout 456 ('127.0.0.1', 50504)
+2018-02-14 16:29:51,406 - DEBUG - models - presence - send presence
+2018-02-14 16:29:53,412 - WARNING - models - read - client logout 512 ('127.0.0.1', 50505)
+2018-02-14 16:29:53,429 - DEBUG - models - presence - send presence
+2018-02-14 16:29:57,816 - DEBUG - models - presence - send presence
+2018-02-14 16:29:57,816 - WARNING - models - read - client logout 448 ('127.0.0.1', 50506)
+2018-02-14 16:29:59,588 - DEBUG - models - presence - send presence
+2018-02-14 16:29:59,588 - WARNING - models - read - client logout 512 ('127.0.0.1', 50507)
+2018-02-14 16:31:19,986 - WARNING - models - read - client logout 448 ('127.0.0.1', 50508)
+2018-02-14 16:31:20,065 - DEBUG - models - presence - send presence
+2018-02-14 16:31:28,406 - DEBUG - models - presence - send presence
+2018-02-14 16:33:25,524 - DEBUG - models - presence - send presence
+2018-02-14 16:33:26,928 - WARNING - models - read - client logout 456 ('127.0.0.1', 50515)
+2018-02-14 16:33:27,061 - DEBUG - models - presence - send error 409
+2018-02-14 16:33:33,112 - DEBUG - models - presence - send error 409
+2018-02-14 16:46:17,877 - DEBUG - models - presence - send presence
+2018-02-14 16:46:20,897 - DEBUG - models - presence - send error 409
+2018-02-14 16:46:27,020 - DEBUG - models - presence - send presence
+2018-02-14 16:46:32,035 - WARNING - models - read - client logout 440 ('127.0.0.1', 50674)
+2018-02-14 16:46:32,035 - DEBUG - models - read - клиент pilik отключился
+2018-02-14 16:47:47,038 - DEBUG - models - presence - send presence
+2018-02-14 16:47:48,524 - DEBUG - models - presence - send presence
+2018-02-14 16:47:49,930 - WARNING - models - read - client logout 520 ('127.0.0.1', 50681)
+2018-02-14 16:47:58,273 - DEBUG - models - presence - send error 409
+2018-02-14 16:48:16,321 - DEBUG - models - presence - send presence
+2018-02-14 16:48:17,326 - WARNING - models - read - client logout 424 ('127.0.0.1', 50686)
+2018-02-14 16:48:17,326 - DEBUG - models - read - клиент pilik отключился
+2018-02-14 16:48:52,578 - DEBUG - models - presence - send presence
+2018-02-14 16:48:54,182 - WARNING - models - read - client logout 524 ('127.0.0.1', 50688)
+2018-02-14 16:49:29,597 - DEBUG - models - presence - send presence
+2018-02-14 16:49:31,004 - WARNING - models - read - client logout 452 ('127.0.0.1', 50689)
+2018-02-14 16:50:03,292 - DEBUG - models - presence - send presence
+2018-02-14 16:50:04,293 - WARNING - models - read - client logout 440 ('127.0.0.1', 50696)
+2018-02-14 16:50:04,293 - DEBUG - models - read - клиент pilik отключился
+2018-02-14 16:50:21,890 - DEBUG - models - presence - send presence
+2018-02-14 16:50:30,312 - WARNING - models - read - client logout 412 ('127.0.0.1', 50698)
+2018-02-14 16:50:30,312 - DEBUG - models - read - клиент pilik отключился
+2018-02-14 16:51:36,242 - DEBUG - models - presence - send presence
+2018-02-14 16:51:39,028 - DEBUG - models - presence - send presence
+2018-02-14 16:51:42,237 - WARNING - models - read - client logout 572 ('127.0.0.1', 50708)
+2018-02-14 16:51:42,237 - DEBUG - models - read - Client pilik logout
+2018-02-14 16:51:45,701 - DEBUG - models - presence - send presence
+2018-02-14 16:51:58,144 - WARNING - models - read - client logout 420 ('127.0.0.1', 50709)
+2018-02-14 16:51:58,144 - DEBUG - models - read - Client pilik1 logout
+2018-02-14 16:52:11,821 - DEBUG - models - presence - send error 409
+2018-02-14 16:52:16,578 - DEBUG - models - presence - send presence
+2018-02-14 17:18:07,607 - DEBUG - models_server - presence - send presence
+2018-02-14 17:18:09,413 - WARNING - models_server - read - client logout 512 ('127.0.0.1', 50820)
+2018-02-14 17:18:09,413 - DEBUG - models_server - read - Client pilik logout
+2018-02-14 17:18:13,080 - DEBUG - models_server - presence - send presence
+2018-02-14 17:18:18,316 - DEBUG - models_server - presence - send presence
+2018-02-14 17:18:24,132 - WARNING - models_server - read - client logout 420 ('127.0.0.1', 50822)
+2018-02-14 17:18:24,132 - DEBUG - models_server - read - Client pilik logout
