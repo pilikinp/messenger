@@ -36,23 +36,23 @@ class Client():
         data = self.msg_client.msg(property, self.username)
         # print(data)
         self.socket.send(self.msg_client.pack(data))
-        msg_recv = self.socket.recv(1024)
-        msg_recv = self.msg_server.unpack(msg_recv)
-        print(msg_recv)
-
-        if msg_recv['response'] == '200':
-            print(msg_recv['alert'])
-            self.rep = Repository(self.username)
-        elif msg_recv['response'] == '201':
-            print(msg_recv['alert'])
-            print('Вы зарегистрировались под ником {}'.format(self.username))
-            self.rep = Repository(self.username)
-        elif msg_recv['response'] == '409':
-            print(msg_recv['alert'])
-            sys.exit()
-        else:
-            print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
-            sys.exit()
+        # msg_recv = self.socket.recv(1024)
+        # msg_recv = self.msg_server.unpack(msg_recv)
+        # print(msg_recv)
+        #
+        # if msg_recv['response'] == '200':
+        #     print(msg_recv['alert'])
+        #     self.rep = Repository(self.username)
+        # elif msg_recv['response'] == '201':
+        #     print(msg_recv['alert'])
+        #     print('Вы зарегистрировались под ником {}'.format(self.username))
+        #     self.rep = Repository(self.username)
+        # elif msg_recv['response'] == '409':
+        #     print(msg_recv['alert'])
+        #     sys.exit()
+        # else:
+        #     print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
+        #     sys.exit()
 
     def command(self,*args):
         sock = args[0]
@@ -146,20 +146,20 @@ class Client():
     def msg(self, *args):
         sock = args[0]
         t1 = threading.Thread(target=self._send_message, args=(sock, 'msg'))
-        t2 = threading.Thread(target=self._get_message, args= (sock,))
+        # t2 = threading.Thread(target=self._get_message, args= (sock,))
         t1.start()
-        t2.start()
+        # t2.start()
         t1.join()
-        t2.join()
+        # t2.join()
 
     def msg_to(self, *args):
         sock = args[0]
         t1 = threading.Thread(target=self._send_message, args=(sock,'msg_to'))
-        t2 = threading.Thread(target=self._get_message, args= (sock,))
+        # t2 = threading.Thread(target=self._get_message, args= (sock,))
         t1.start()
-        t2.start()
+        # t2.start()
         t1.join()
-        t2.join()
+        # t2.join()
 
     def login_chat(self, *args):
         sock = args[0]
@@ -172,11 +172,11 @@ class Client():
     def chat(self, *args):
         sock = args[0]
         t1 = threading.Thread(target=self._send_message, args=(sock, 'chat'))
-        t2 = threading.Thread(target=self._get_message, args=(sock,))
+        # t2 = threading.Thread(target=self._get_message, args=(sock,))
         t1.start()
-        t2.start()
+        # t2.start()
         t1.join()
-        t2.join()
+        # t2.join()
 
     def run(self):
         with self.socket as sock:
@@ -193,6 +193,12 @@ class Client():
                 print('неверная команда')
                 sys.exit()
             while True:
-                self.command(sock)
+                t3 = threading.Thread(target=self._get_message, args= (sock,))
+                t2 = threading.Thread(target=self.command(), args=(sock,))
+                t2.start()
+                t2.join()
+                t3.start()
+
+                t3.join()
 
     # добавить поток который будет постоянно слушать сервер
