@@ -6,7 +6,7 @@ import logging
 
 class Repository:
 
-    def __init__(self, clients_dict = {}, clients_list = [] ):
+    def __init__(self, clients_dict={}, clients_list=[]):
         self.clients_dict = clients_dict
         self.clients_list = clients_list
 
@@ -15,18 +15,18 @@ class Repository:
         self.clients_list.append(sock)
 
     def del_user(self, user, sock):
-        del(self.clients_dict[user])
+        del (self.clients_dict[user])
         self.clients_list.remove(sock)
 
 
 class FilesRepository(Repository):
 
-    def __init__(self, clients_dict = {}, clients_list =[]):
+    def __init__(self, clients_dict={}, clients_list=[]):
         super().__init__(clients_dict, clients_list)
         self._logger = logging.getLogger('app')
 
     def add_user(self, user, sock):
-        super().add_user(user,sock)
+        super().add_user(user, sock)
         self._logger.info('User {} login'.format(user))
 
     def del_user(self, user, sock):
@@ -48,11 +48,11 @@ class JimMessage():
     # }
 
     def msg(self, action, username):
-        '''Создаем словарь-сообщение для упаковки в JSON'''
+
         if action == 'presence':
             msg = {'action': action,
                    'time': time.ctime(),
-                    'user': username}
+                   'user': username}
         elif action == 'msg':
             to_ = ''
             message = input('Введите сообщение: ')
@@ -63,7 +63,7 @@ class JimMessage():
                    'message': message}
         elif action == 'msg_to':
             to_ = input('Введите адресата: ')
-            if to_ :
+            if to_:
                 message = input('Введите сообщение: ')
                 msg = {'action': 'msg',
                        'time': time.ctime(),
@@ -84,9 +84,50 @@ class JimMessage():
             msg = {'action': action,
                    'time': time.ctime(),
                    'user': username}
+        elif action == 'get_chat_list':
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username}
+        elif action == 'add_contact':
+            contact = input('Введите имя контакта: ')
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username,
+                   'contact': contact}
+        elif action == 'del_contact':
+            contact = input('Введите имя контакта: ')
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username,
+                   'contact': contact}
+        elif action == 'exit':
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username}
+        elif action == 'add_chat':
+            chat = input('Введите название чата: ')
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username,
+                   'chat': chat}
+        elif action == 'login_chat':
+            chat = input('Введите название чата: ')
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'user': username,
+                   'chat': chat}
+        elif action == 'chat':
+            message = input('Введите сообщение: ')
+            msg = {'action': action,
+                   'time': time.ctime(),
+                   'to': '',
+                   'from': username,
+                   'message': message}
         else:
             sys.exit()
         return msg
+
+    # сделать одно универсальное сообщение
 
     def pack(self, msg):
         '''Упаковываем сообщение'''
@@ -100,7 +141,6 @@ class JimMessage():
 
 
 class JimAnswer(JimMessage):
-
     code = {
         '100': 'Базовое уведомление',
         '101': 'Важное уведомление',
@@ -117,21 +157,9 @@ class JimAnswer(JimMessage):
         '500': 'Ошибка сервера'
     }
 
-
-    def msg(self, code, quantity = ''):
+    def msg(self, code, quantity=''):
         msg = {'response': code,
-                'time': time.ctime(),
-                'alert': self.code[code],
+               'time': time.ctime(),
+               'alert': self.code[code],
                'quantity': quantity}
         return msg
-
-
-
-
-class Chat:
-    '''Пока не понял, что требуется реализовать в данном классе. Может быть функции отправки и получения сообщений,
-    а в клиенте оставить только соединение с сервером, но тогда клиент будет наследоваться от чата, а это как то
-    неправильно'''
-    pass
-
-

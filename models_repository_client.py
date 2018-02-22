@@ -2,10 +2,12 @@ import sqlite3
 import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Table, Column, Integer, Numeric, String, MetaData, ForeignKey
+from sqlalchemy import Table, Column, Integer, Numeric, String, MetaData, ForeignKey, Text
 from models_repository_serv import Repository, Users, UserContacts
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
+
+import time
 
 Base = declarative_base()
 
@@ -27,11 +29,13 @@ class HistoryMessage(Base):
     time_ = Column(String)
     from_id = Column(String, ForeignKey('Contacts.id'))
     to_id = Column(String, ForeignKey('Contacts.id'))
+    message = Column(Text)
 
-    def __init__(self, time_, from_id, to_id):
+    def __init__(self, time_, from_id, to_id, message):
         self.time_ = time_
         self.from_id = from_id
         self.to_id = to_id
+        self.message = message
 
 class Repository():
 
@@ -52,6 +56,9 @@ class Repository():
         self.session.add(obj)
         self.session.commit()
 
+    def add_contact(self, name):
+        self.session.add(Contacts(name))
+
     def del_model(self, model):
         models = self.session.query(model)
         for mod in models:
@@ -66,3 +73,5 @@ if __name__ == '__main__':
     rep.add_obj(Contacts('pilik'))
     # rep.del_model(Contacts)
     print(rep.contacts_list())
+    for i in range(10):
+        rep.add_contact('pilik{}'.format(i))

@@ -73,10 +73,12 @@ def main_loop():
         except OSError as e:
             pass                                                                  #timeout вышел
         else:
-            msg = sock.recv(2048)
+            # msg = sock.recv(2048)
             clients_list.append(sock)
-            print(msg)
-
+            # print(msg)
+            data = 'asdasdas'
+            data = json.dumps(data).encode()
+            sock.send(data)
         finally:
             wait = 0
             r = []

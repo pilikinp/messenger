@@ -2,9 +2,11 @@ import time
 import socket, select
 import logging
 import log_config
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from models import JimAnswer, JimMessage, FilesRepository
-from models_repository_serv import Repository, Users
+from models_repository_serv import Repository, Users, UserContacts, Chat, UsersChat
 
 rep = Repository()
 
@@ -22,8 +24,15 @@ class Server(FilesRepository):
         self.commands = {
             'presence': self.presence,
             'registration': self.registration,
-            'msg': self.chat,
+            'msg': self.msg,
             'get_contact_list': self.get_contact,
+            'add_contact': self.add_contact,
+            'del_contact': self.del_contact,
+            'add_chat': self.add_chat,
+            'exit': self.exit,
+            'get_chat_list': self.get_chat_list,
+            'login_chat': self.login_chat,
+            'chat': self.chat
         }
         super().__init__(clients_dict ={}, clients_list =[])
 
@@ -69,24 +78,149 @@ class Server(FilesRepository):
         sock.send(msg)
         for username in result:
             msg = self.msg_client.msg('get_contact_list', str(username))
+            print(msg)
             msg = self.msg_client.pack(msg)
             sock.send(msg)
 
+    def get_chat_list(self, *args):
+        sock = args[0]
+        result = rep.get_chat_list()
+        msg = self.msg_server.msg('202', len(result))
+        msg = self.msg_server.pack(msg)
+        sock.send(msg)
+        for chatname in result:
+            msg = self.msg_client.msg('get_chat_list', str(chatname))
+            print(msg)
+            msg = self.msg_client.pack(msg)
+            sock.send(msg)
+
+    def add_chat(self,*args):
+        sock = args[0]
+        data = args[1]
+        msg = self.msg_client.unpack(data)
+        try:
+            rep.add(Chat(msg['chat']))
+            data = self.msg_server.msg('201')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except IntegrityError as err1:
+            rep.session.rollback()
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except AttributeError as err2:
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+
+    def login_chat(self, *args):
+        sock, data, requests = args
+        msg = self.msg_client.unpack(data)
+        try:
+            chat = rep.get_chat(msg['chat'])
+            for key, value in self.clients_dict.items():
+                if value is sock:
+                        name_a = key
+            rep.add_user_in_chat(msg['chat'], name_a)
+            data = self.msg_server.msg('200')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except IntegrityError as err1:
+            rep.session.rollback()
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except AttributeError as err:
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+
     def chat(self, *args):
-        sock, data, msg, requests = args
+        sock, data, requests = args
+        for key, value in self.clients_dict.items():
+            if value is sock:
+                name_a = key
+        id = rep.session.query(Users).filter_by(username = name_a).first().id
+        print(id)
+        chat_name = rep.session.query(UsersChat).filter_by(user_id = id).first().chat_name
+        print(chat_name)
+        for user in rep.get_user_in_chat(str(chat_name)):
+            print(str(user.user_name))
+            self.clients_dict[str(user.user_name)].send(data)
+
+
+    def msg(self, *args):
+        sock, data, requests = args
+        msg = self.msg_client.unpack(data)
         if msg['to'] == '':
             requests[sock] = data
         elif rep.get_user(msg['to']) and rep.get_user(msg['to']).flag:
             self.clients_dict[msg['to']].send(data)
         elif rep.get_user(msg['to']) and rep.get_user(msg['to']).flag is False:
             data = self.msg_server.msg('410')
-            data = self.msg_client.pack(data)
+            data = self.msg_server.pack(data)
             sock.send(data)
         else:
             data = self.msg_server.msg('404')
-            data = self.msg_client.pack(data)
+            data = self.msg_server.pack(data)
             sock.send(data)
         print(requests)
+
+    def add_contact(self, *args):
+        sock, data = args[0], args[1]
+        msg = self.msg_client.unpack(data)
+        for key, value in self.clients_dict.items():
+            if value is sock:
+                name_a = key
+        try:
+            rep.add_contact(name_a, msg['contact'])
+            data = self.msg_server.msg('201')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except IntegrityError as err1:
+            rep.session.rollback()
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except AttributeError as err2:
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+
+    def del_contact(self, *args):
+        sock, data = args[0], args[1]
+        msg = self.msg_client.unpack(data)
+        for key, value in self.clients_dict.items():
+            if value is sock:
+                name_a = key
+        try:
+            rep.del_contact(name_a, msg['contact'])
+            data = self.msg_server.msg('201')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except IntegrityError as err1:
+            rep.session.rollback()
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+        except AttributeError as err2:
+            data = self.msg_server.msg('400')
+            data = self.msg_server.pack(data)
+            sock.send(data)
+
+    def exit(self,*args):
+        sock = args[0]
+        print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
+        for key, value in self.clients_dict.items():
+            if value is sock:
+                self.del_user(key, value)
+                rep.logout(key)
+                try:
+                    rep.session.delete(rep.session.query(UsersChat).filter_by(user_id=rep.get_user(key).id).first())
+                    rep.session.commit()
+                except UnmappedInstanceError:
+                    pass
+                break
 
     def read(self, cl):
         requests = {}
@@ -95,26 +229,18 @@ class Server(FilesRepository):
                 data = sock.recv(1024)
                 msg = self.msg_client.unpack(data)
                 print(self.msg_client)
-                self.commands[msg['action']](sock, data, msg, requests)
-                # if msg['to'] == '':
-                #     requests[sock] = data
-                # elif rep.get_user(msg['to']) and rep.get_user(msg['to']).flag:
-                #     self.clients_dict[msg['to']].send(data)
-                # elif rep.get_user(msg['to']).flag is False:
-                #     data = self.msg_server.msg('410')
-                #     data = self.msg_client.pack(data)
-                #     sock.send(data)
-                # else:
-                #     data = self.msg_server.msg('404')
-                #     data = self.msg_client.pack(data)
-                #     sock.send(data)
-                # print(requests)
+                self.commands[msg['action']](sock, data, requests)
             except ConnectionResetError:
                 print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
                 for key, value in self.clients_dict.items():
                     if value is sock:
                         self.del_user(key, value)
                         rep.logout(key)
+                        try:
+                            rep.session.delete(rep.session.query(UsersChat).filter_by(user_id = rep.get_user(key).id).first())
+                            rep.session.commit()
+                        except UnmappedInstanceError:
+                            pass
                         break
                 print('текущий лист', self.clients_list)
         return requests
@@ -143,9 +269,6 @@ class Server(FilesRepository):
                 msg = self.msg_client.unpack(msg)
                 print(msg)
                 self.commands[msg['action']](sock, msg['time'], addr, msg['user'])
-                # msg = sock.recv(2048)
-                # msg = self.msg_client.unpack(msg)
-                # self.commands[msg['action']](sock)
             finally:
                 wait = 0
                 r = []
@@ -157,3 +280,8 @@ class Server(FilesRepository):
                 # print(self.clients_list)
                 req = self.read(r)
                 self.write(req, w)
+
+if __name__ == '__main__':
+    pass
+
+#разнести функции по разным классам

@@ -9,7 +9,7 @@ class Users(CBase):
 
     __tablename__ = 'users'
     id = Column(Integer(), primary_key= True)
-    username = Column(Unicode(), unique= True)
+    username = Column(Unicode(), nullable= False, unique= True)
     # socket = Column(BLOB)
     flag = Column(Boolean())
 
@@ -43,18 +43,43 @@ class UserContacts(CBase):
     id_user = Column(Integer(), ForeignKey('users.id'))
     id_contact = Column(Integer(), ForeignKey('users.id'))
 
+    # name_user = relationship('Users', order_by = Users.id)
+    # name_contact = relationship('Users', order_by = Users.id)
+
     # check_1 = UniqueConstraint('id_user', 'id_contact') не работает если при создании таблиц не задавать UNIQUE
+    user_name = relationship('Users', foreign_keys=[id_user])
+    contact_name = relationship('Users', foreign_keys=[id_contact])
 
     def __init__(self, id_user, id_contact):
         self.id_user = id_user
         self.id_contact = id_contact
 
-    p_id_users = relationship('Users', foreign_keys = [id_user])
-    p_id_contact = relationship('Users', foreign_keys = [id_contact])
+    def __repr__(self):
+        return '{}'.format(self.contact_name)
+
+class Chat(CBase):
+    __tablename__ = 'Chat'
+    id = Column(Integer(), primary_key= True)
+    chat_name = Column(String(), unique= True)
+
+    def __init__(self, chat_name):
+        self.chat_name = chat_name
 
     def __repr__(self):
-        return '{}'.format(self.p_id_contact)
+        return self.chat_name
 
+class UsersChat(CBase):
+    __tablename__ = 'UsersChat'
+    id = Column(Integer(), primary_key= True)
+    chat_id = Column(Integer(), ForeignKey('Chat.id'))
+    user_id = Column(Integer(), ForeignKey('users.id'))
+
+    chat_name = relationship('Chat', foreign_keys= [chat_id])
+    user_name = relationship('Users', foreign_keys= [user_id])
+
+    def __init__(self, chat_id, user_id):
+        self.chat_id = chat_id
+        self.user_id = user_id
 
 class Repository:
 
@@ -85,6 +110,37 @@ class Repository:
         result = self.session.query(Users).filter_by(username = username).first()
         return result
 
+    def get_contact(self, username, contact):
+        # contacts = self.get_user_contacts(username)
+        id = self.get_user(username).id
+        id_cont = self.get_user(contact).id
+        result = self.session.query(UserContacts).filter_by(id_user= id).filter_by(id_contact= id_cont).first()
+        return result
+
+    def get_chat_list(self):
+        result = self.session.query(Chat).all()
+        return result
+
+    def get_chat(self, chat_name):
+        result = self.session.query(Chat).filter_by(chat_name = chat_name).first()
+        return result
+
+    def get_user_in_chat(self, chat_name):
+        id = self.session.query(Chat).filter_by(chat_name=chat_name).first().id
+        result = self.session.query(UsersChat).filter_by(chat_id=id).all()
+        return result
+
+    def add_contact(self, acountname, contact_name):
+        id = self.session.query(Users).filter_by(username=acountname).first().id
+        id_contact = self.session.query(Users).filter_by(username=contact_name).first().id
+        self.add(UserContacts(id, id_contact))
+        self.session.commit()
+
+    def del_contact(self, acountname, contact_name):
+        result = self.get_contact(acountname,contact_name)
+        self.session.delete(result)
+        self.session.commit()
+
     def login(self, time_, ip, username):
         result = self.session.query(Users).filter_by(username=username).first()
         result.flag = 1
@@ -102,6 +158,12 @@ class Repository:
         result = self.session.query(UserContacts).filter_by(id_user= id).all()
         return result
 
+    def add_user_in_chat(self, chat, username):
+        chat_id = self.session.query(Chat).filter_by(chat_name = chat).first().id
+        user_id = self.session.query(Users).filter_by(username = username).first().id
+        self.session.add(UsersChat(chat_id, user_id))
+        self.session.commit()
+
 if __name__ == '__main__':
     rep = Repository()
     # rep.logout('pilik')
@@ -109,6 +171,19 @@ if __name__ == '__main__':
     # rep.add(UserContacts(1,3))
     # rep.add(Users('pilik5'))
     # print(rep.get_user('pilik5'))
-    print(rep.get_user_contacts('pilik14'))
-    for cont in rep.get_user_contacts('pilik14'):
-        print(str(cont))
+    # print(rep.get_user_contacts('pilik14'))
+    #
+    # print(rep.get_user_contacts('pilik14'))
+    # result = rep.get_user_contacts('pilik14')
+    print(rep.session.query(UserContacts).get(2).id_user)
+    print(rep.session.query(UserContacts).get(2).contact_name)
+    # print(rep.session.query(Users).get(18).contacts)
+    for i in rep.get_chat_list():
+        print('room' == str(i))
+    print(rep.get_chat_list())
+    print('room' in rep.get_chat_list())
+    for i in rep.get_user_in_chat('room'):
+        print(i.user_name)
+    print(rep.session.query(UsersChat).filter_by(user_id =12).first())
+    rep.session.delete(rep.session.query(UsersChat).filter_by(user_id=rep.get_user('pilik1').id).first())
+    rep.session.commit()
