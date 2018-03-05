@@ -253,6 +253,7 @@ class Server(FilesRepository):
                 for sock in cl:
                     try:
                         sock.send(resp)
+                        print('отправлено')
                     except ConnectionResetError:
                         pass
 

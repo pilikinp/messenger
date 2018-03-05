@@ -68,10 +68,15 @@ class Repository():
     def contacts_list(self):
         return self.session.query(Contacts).all()
 
+    def get_history(self, name):
+        return self.session.query(HistoryMessage).filter_by(to_id = name).all()
+
+
 if __name__ == '__main__':
-    rep = Repository('pilik')
-    rep.add_obj(Contacts('pilik'))
+    rep = Repository('pilik22')
+    rep.add_obj(Contacts('pilik22'))
     # rep.del_model(Contacts)
-    print(rep.contacts_list())
-    for i in range(10):
-        rep.add_contact('pilik{}'.format(i))
+    # print(rep.contacts_list())
+    # for i in range(10):
+    #     rep.add_contact('pilik{}'.format(i))
+    print(rep.get_history('pilik26')[0].message)

@@ -18,15 +18,16 @@ class Client():
         self._port = port
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.lock = threading.Lock()
-        self.command_dict = {'1': self.get_contact_list,
-                        '2': self.msg,
-                        '3': self.msg_to,
-                        '4': self.add_chat,
-                        '5': self.login_chat,
-                        '6': self.get_chat_list,
-                        '7': self.add_contact,
-                        '8':self.del_contact,
-                        '9': self.exit}
+        self.command_dict = {
+            '1': self.get_contact_list,
+            '2': self.msg,
+            '3': self.msg_to,
+            '4': self.add_chat,
+            '5': self.login_chat,
+            '6': self.get_chat_list,
+            '7': self.add_contact,
+            '8':self.del_contact,
+            '9': self.exit}
 
     @property
     def socket(self):
@@ -53,6 +54,7 @@ class Client():
         else:
             print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
             sys.exit()
+        return msg_recv
 
     def command(self,*args):
         sock = args[0]
@@ -80,19 +82,44 @@ class Client():
         data = self.action(sock, 'add_chat')
         print(data)
 
-    def add_contact(self, *args):
-        sock = args[0]
-        data = self.action(sock, 'add_contact')
-        print(data)
-        self.get_contact_list(sock)
+    # def add_contact(self, *args):
+    #     sock = args[0]
+    #     data = self.action(sock, 'add_contact')
+    #     print(data)
+    #     self.get_contact_list(sock)
 
-    def del_contact(self, *args):
-        sock = args[0]
-        data = self.action(sock, 'del_contact')
-        print(data)
-        self.get_contact_list(sock)
+    def add_contact(self, contact):
+        sock = self.socket
+        msg = {'action': 'add_contact',
+               'time': time.ctime(),
+               'user': self.username,
+               'contact': contact}
+        msg = self.msg_client.pack(msg)
+        sock.send(msg)
+        data = sock.recv(1024)
+        data = self.msg_server.unpack(data)
+        return data
+
+    # def del_contact(self, *args):
+    #     sock = args[0]
+    #     data = self.action(sock, 'del_contact')
+    #     print(data)
+    #     self.get_contact_list(sock)
+
+    def del_contact(self, contact):
+        sock = self.socket
+        msg = {'action': 'del_contact',
+               'time': time.ctime(),
+               'user': self.username,
+               'contact': contact}
+        msg = self.msg_client.pack(msg)
+        sock.send(msg)
+        data = sock.recv(1024)
+        data = self.msg_server.unpack(data)
+        return data
 
     def get_contact_list(self, *args):
+        cont_l = []
         sock = args[0]
         self.rep.del_model(Contacts)
         data = self.action(sock, 'get_contact_list')
@@ -101,8 +128,10 @@ class Client():
             data = sock.recv(1024)
             data = self.msg_client.unpack(data)
             print('{}: {}'.format(cont+1, data['user']))
+            cont_l.append(data['user'])
             self.rep.add_contact(data['user'])
         self.rep.session.commit()
+        return cont_l
 
     def get_chat_list(self, *args):
         sock = args[0]
@@ -120,15 +149,30 @@ class Client():
         sock.send(msg)
         sys.exit()
 
-    def _send_message(self, *args):
-        sock, action = args
+    # def _send_message(self, *args):
+    #     sock, action = args
+    #
+    #     while True:
+    #         msg = self.msg_client.msg(action, self.username)
+    #         self.rep.add_obj(HistoryMessage(msg['time'], self.username, msg['to'], msg['message']))
+    #         msg = self.msg_client.pack(msg)
+    #         sock.send(msg)
+    #         time.sleep(0.5)
 
-        while True:
-            msg = self.msg_client.msg(action, self.username)
-            self.rep.add_obj(HistoryMessage(msg['time'], self.username, msg['to'], msg['message']))
-            msg = self.msg_client.pack(msg)
-            sock.send(msg)
-            time.sleep(0.5)
+    def _send_message(self, *args):
+        sock, to_, message, username = args
+
+        msg = {'action': 'msg',
+               'time': time.ctime(),
+               'to': to_,
+               'from': username,
+               'message': message}
+
+
+        self.rep.add_obj(HistoryMessage(msg['time'], self.username, msg['to'], msg['message']))
+        msg = self.msg_client.pack(msg)
+        sock.send(msg)
+        # time.sleep(0.5)
 
     def _get_message(self, *args):
         sock = args[0]
@@ -178,21 +222,29 @@ class Client():
         t1.join()
         t2.join()
 
-    def run(self):
-        with self.socket as sock:
-            command = input('Войти или зарегестрироваться (1/2): ')
-            if command.upper() == '1':
-                self.username = input('Введите имя пользователя: ')
-                sock.connect((self._host, self._port))
-                self.connect_guest('presence')
-            elif command.upper() == '2':
-                self.username = input('Введите имя пользователя: ')
-                sock.connect((self._host, self._port))
-                self.connect_guest('registration')
-            else:
-                print('неверная команда')
-                sys.exit()
-            while True:
-                self.command(sock)
+    # def run(self):
+    #     with self.socket as sock:
+    #         command = input('Войти или зарегестрироваться (1/2): ')
+    #         if command.upper() == '1':
+    #             self.username = input('Введите имя пользователя: ')
+    #             sock.connect((self._host, self._port))
+    #             self.connect_guest('presence')
+    #         elif command.upper() == '2':
+    #             self.username = input('Введите имя пользователя: ')
+    #             sock.connect((self._host, self._port))
+    #             self.connect_guest('registration')
+    #         else:
+    #             print('неверная команда')
+    #             sys.exit()
+    #         while True:
+    #             self.command(sock)
+
+    def run(self, name):
+        # with self.socket as sock:
+        self.username = name
+        self.socket.connect((self._host, self._port))
+        msg = self.connect_guest('presence')
+        return msg
+
 
     # добавить поток который будет постоянно слушать сервер
