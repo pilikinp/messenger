@@ -134,7 +134,6 @@ class Repository:
         id = self.session.query(Users).filter_by(username=acountname).first().id
         id_contact = self.session.query(Users).filter_by(username=contact_name).first().id
         self.add(UserContacts(id, id_contact))
-        self.session.commit()
 
     def del_contact(self, acountname, contact_name):
         result = self.get_contact(acountname,contact_name)

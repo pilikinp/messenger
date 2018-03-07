@@ -6,15 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>952</width>
-    <height>797</height>
+    <width>815</width>
+    <height>633</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Messenger</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QGridLayout" name="gridLayout">
+   <layout class="QGridLayout" name="gridLayout_3">
     <item row="0" column="0">
      <widget class="QSplitter" name="splitter_2">
       <property name="orientation">
@@ -27,10 +27,34 @@
        <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout_2">
          <item>
-          <widget class="QListWidget" name="listWidget_contacts"/>
+          <widget class="QTabWidget" name="tabContacts">
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <widget class="QWidget" name="tab">
+            <attribute name="title">
+             <string>Контакты</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout">
+             <item row="0" column="0">
+              <widget class="QListWidget" name="listWidget_contacts"/>
+             </item>
+            </layout>
+           </widget>
+           <widget class="QWidget" name="tab_2">
+            <attribute name="title">
+             <string>Чаты</string>
+            </attribute>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="0" column="0">
+              <widget class="QListWidget" name="listWidget"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
             <spacer name="horizontalSpacer">
              <property name="orientation">
@@ -65,10 +89,26 @@
        <widget class="QWidget" name="">
         <layout class="QVBoxLayout" name="verticalLayout">
          <item>
-          <widget class="QListWidget" name="listWidget_message"/>
+          <widget class="QListWidget" name="listWidget_message">
+           <property name="mouseTracking">
+            <bool>false</bool>
+           </property>
+           <property name="verticalScrollBarPolicy">
+            <enum>Qt::ScrollBarAsNeeded</enum>
+           </property>
+           <property name="sizeAdjustPolicy">
+            <enum>QAbstractScrollArea::AdjustToContents</enum>
+           </property>
+           <property name="autoScroll">
+            <bool>true</bool>
+           </property>
+           <property name="autoScrollMargin">
+            <number>0</number>
+           </property>
+          </widget>
          </item>
          <item>
-          <layout class="QHBoxLayout" name="horizontalLayout">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
             <widget class="QLineEdit" name="lineEdit_message"/>
            </item>
@@ -76,13 +116,6 @@
             <widget class="QPushButton" name="sendButton">
              <property name="text">
               <string>Отправить</string>
-             </property>
-            </widget>
-           </item>
-           <item>
-            <widget class="QPushButton" name="pushButtonUp">
-             <property name="text">
-              <string>Обновить</string>
              </property>
             </widget>
            </item>
@@ -106,13 +139,21 @@
    <zorder>horizontalSpacer</zorder>
    <zorder>console</zorder>
    <zorder>listWidget_message</zorder>
+   <zorder>splitter_2</zorder>
+   <zorder></zorder>
+   <zorder>lineEdit_message</zorder>
+   <zorder>sendButton</zorder>
+   <zorder>horizontalSpacer</zorder>
+   <zorder>delContact</zorder>
+   <zorder>addContact</zorder>
+   <zorder>tabContacts</zorder>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>952</width>
+     <width>815</width>
      <height>21</height>
     </rect>
    </property>
@@ -121,6 +162,7 @@
      <string>Меню</string>
     </property>
     <addaction name="login"/>
+    <addaction name="action"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -130,6 +172,11 @@
    </property>
   </action>
   <action name="action_2">
+   <property name="text">
+    <string>Регистрация</string>
+   </property>
+  </action>
+  <action name="action">
    <property name="text">
     <string>Регистрация</string>
    </property>

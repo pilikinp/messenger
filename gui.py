@@ -16,119 +16,148 @@ from models_repository_client import Repository, Contacts, HistoryMessage
 
 class MyWindow(QtWidgets.QMainWindow):
 
-    client = Client('127.0.0.1', 7777)
-    msg_client = JimMessage()
-    msg_server = JimAnswer()
-
     def __init__(self, parent = None):
 
         super().__init__(parent)
         # uic.loadUi('main.ui', self)
-
         self.ui = ui_class()
         self.ui.setupUi(self)
         self.ui.retranslateUi(self)
 
-        # self.lock = threading.Lock()
+        self.monitor = Monitor(self)
+        self.thread = QtCore.QThread()
 
-        self.ui.login.triggered.connect(self.login)
+        self.ui.login.triggered.connect(lambda: self.login('presence'))
         self.ui.listWidget_contacts.clicked.connect(self.chat)
-        self.ui.pushButtonUp.pressed.connect(self.get_message)
-
-    def get_message(self):
-        sock = self.client.socket
-        data = sock.recv(1024)
-        data = self.msg_server.unpack(data)
-        print(data)
-        if 'action' in data:
-            self.ui.listWidget_message.addItem('{}  {}  {}'.format(data['time'], data['from'], data['message']))
-            print(data['time'], data['from'], data['message'])
-            self.client.rep.add_obj(HistoryMessage(data['time'], data['from'], data['to'], data['message']))
-        else:
-            print('ERROR ', data['response'], data['time'], data['alert'])
-            self.ui.console.addItem('{} {} {} {}'.format('ERROR ', data['response'], data['time'], data['alert']))
-
+        self.monitor.gotData.connect(self.update_message)
+        self.monitor.gotResp.connect(self.update_console)
+        self.monitor.gotCont.connect(self.update_contacts)
 
     def chat(self):
         self.ui.listWidget_message.clear()
         name = self.ui.listWidget_contacts.currentItem().text()
-        history = self.client.rep.get_history(name)
+        history = self.monitor.client.rep.get_history(name)
         print(history)
         for his in history:
             self.ui.listWidget_message.addItem('{} - {} - {}'.format(his.time_, his.from_id, his.message))
-
+            self.ui.listWidget_message.scrollToBottom()
 
     def get_contacts(self):
-        self.ui.listWidget_contacts.clear()
-        contacts = self.client.get_contact_list(self.client.socket)
-        for cont in contacts:
-            self.ui.listWidget_contacts.addItem(str(cont))
+        self.monitor.client.get_contact_list(self.monitor.client.socket)
+
+
 
     def on_addContact_pressed(self):
-        dialog = uic.loadUi('dialog_form.ui')
-        def add_cont():
-            name = dialog.textEditName.toPlainText()
-            data = self.client.add_contact(name)
-            self.ui.console.addItem(str(data))
+        if self.ui.tabContacts.currentIndex() == 0:
+            dialog = uic.loadUi('dial.ui')
 
-        dialog.pushOk.clicked.connect(add_cont)
-        dialog.pushOk.clicked.connect(dialog.accept)
-        dialog.pushCancel.clicked.connect(dialog.reject)
-        dialog.exec()
-        self.get_contacts()
+            def add_cont():
+                name = dialog.line.text()
+                self.monitor.client.add_contact(name)
+                # self.ui.listWidget_contacts.addItem(name)
+
+            dialog.pushOk.clicked.connect(add_cont)
+            dialog.pushOk.clicked.connect(dialog.accept)
+            dialog.exec()
+            time.sleep(0.5) # Почему без данной задержки не работает
+            self.get_contacts()
+        else:
+            self.ui.tabContacts.setCurrentIndex(1)
 
     def on_delContact_pressed(self):
+        # if self.ui.tabContacts.currentIndex() == 0:
         try:
             name = self.ui.listWidget_contacts.currentItem().text()
-            data = self.client.del_contact(name)
-            self.ui.console.addItem(str(data))
+            print(type(name))
+            self.monitor.client.del_contact(name)
+            time.sleep(0.5)
             self.get_contacts()
-
         except:
             self.ui.console.addItem('Не выбран контакт')
 
     def on_sendButton_pressed(self):
         message = self.ui.lineEdit_message.text()
         to_ = self.ui.listWidget_contacts.currentItem().text()
-        self.ui.listWidget_message.addItem('{} - {} - {}'.format(time.ctime(), self.client.username, message))
-        self.client._send_message(self.client.socket, to_, message, self.client.username)
+        self.ui.listWidget_message.addItem('{} - {} - {}'.format(time.ctime(), self.monitor.client.username, message))
+        self.ui.listWidget_message.scrollToBottom()
+        self.monitor.client._send_message(self.monitor.client.socket, to_, message, self.monitor.client.username)
         self.ui.lineEdit_message.clear()
+        self.ui.lineEdit_message.setFocus()
 
-###### почему если использовать для вызова функции синтаксический сахар on_login_trigger то окно QDialog появляется два раза
-    def login(self):
-        dialog = uic.loadUi('dialog_form.ui')
+    @QtCore.pyqtSlot(str)
+    def update_message(self, data):
+        self.ui.listWidget_message.addItem(data)
+        self.ui.listWidget_message.scrollToBottom()
+
+    @QtCore.pyqtSlot(str)
+    def update_console(self, data):
+        self.ui.console.addItem(data)
+        self.ui.console.scrollToBottom()
+
+    @QtCore.pyqtSlot(dict)
+    def update_contacts(self, data):
+        self.ui.listWidget_contacts.clear()
+        for contact in data['users']:
+            self.ui.listWidget_contacts.addItem(str(contact))
+
+
+###### почему если использовать для вызова функции 'синтаксический сахар' on_login_triggered то окно QDialog появляется
+    # два раза
+
+    def login(self, action):
+        dialog = uic.loadUi('dial.ui')
+        self.monitor.moveToThread(self.thread)
+        self.thread.started.connect(self.monitor.recv_msg)
+        dialog.line.setFocus()
 
         def reg():
-            name = dialog.textEditName.toPlainText()
-            msg = self.client.run(name)
+            name = dialog.line.text()
+            msg = self.monitor.client.run(name, action)
             self.ui.console.addItem(str(msg))
+            self.thread.start()
+            self.get_contacts()
 
         dialog.pushOk.clicked.connect(reg)
         dialog.pushOk.clicked.connect(dialog.accept)
-        dialog.pushCancel.clicked.connect(dialog.reject)
         dialog.exec()
-        self.get_contacts()
-        # self.get_message()
-        # t1 = threading.Thread(target=self.get_message)
-        # t1.daemon = True
-        # t1.start()
 
 
-####### почему не работает с Qlineedit??????????????????????????????????
-    # def login_tr(self):
-    #     dialog = uic.loadUi('dial.ui')
-    #
-    #     def reg():
-    #         name = dialog.line.text()
-    #         msg = self.client.run(name)
-    #         self.ui.listWidget_message.addItem(str(msg))
-    #
-    #     dialog.pushOk.clicked.connect(reg)
-    #     dialog.pushOk.clicked.connect(dialog.accept)
-    #     dialog.pushCancel.clicked.connect(dialog.reject)
-    #     dialog.exec()
-    #     self.ui.listWidget_contacts.clear()
-    #     cont = self.client.get_contact_list(self.client.socket)
-    #     for i in cont:
-    #         self.ui.listWidget_contacts.addItem(str(i))
+
+class Monitor(QtCore.QObject):
+
+    msg_client = JimMessage()
+    msg_server = JimAnswer()
+    gotData = QtCore.pyqtSignal(str)
+    gotResp = QtCore.pyqtSignal(str)
+    gotCont = QtCore.pyqtSignal(dict)
+
+
+
+    def __init__(self, parent):
+        super().__init__()
+
+        self.parent = parent
+        self.client = Client('127.0.0.1', 7777)
+        self.resv_queue = self.client.recv_queue
+
+    def recv_msg(self):
+        self.client.msg()
+        while 1:
+            data = self.resv_queue.get()
+            print(data)
+            if 'action' in data and data['action'] == 'msg':
+                self.gotData.emit('{} - {} - {}'.format(data['time'], data['from'], data['message']))
+            elif 'response' in data:
+                self.gotResp.emit('{} - {} - {}'.format(data['response'], data['time'], data['alert']))
+            elif 'users' in data:
+                self.gotCont.emit(data)
+
+            self.resv_queue.task_done()
+
+        self.resv_queue.task_done()
+        self.finished.emit(0)
+
+
+
+
 

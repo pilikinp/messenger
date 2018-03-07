@@ -73,14 +73,17 @@ class Server(FilesRepository):
             if value is sock:
                 name_a = key
         result = rep.get_user_contacts(name_a)
-        msg = self.msg_server.msg('202', len(result))
-        msg = self.msg_server.pack(msg)
-        sock.send(msg)
+        # msg = self.msg_server.msg('202', len(result))
+        # msg = {'contact_list': len(result)}
+        # msg = self.msg_server.pack(msg)
+        # sock.send(msg)
+        msg = {'users': []}
         for username in result:
-            msg = self.msg_client.msg('get_contact_list', str(username))
-            print(msg)
-            msg = self.msg_client.pack(msg)
-            sock.send(msg)
+            # msg = {'users': str(username)}
+            msg['users'].append(str(username))
+        print(msg)
+        msg = self.msg_client.pack(msg)
+        sock.send(msg)
 
     def get_chat_list(self, *args):
         sock = args[0]
@@ -228,7 +231,7 @@ class Server(FilesRepository):
             try:
                 data = sock.recv(1024)
                 msg = self.msg_client.unpack(data)
-                print(self.msg_client)
+                print('что то пришло',msg)
                 self.commands[msg['action']](sock, data, requests)
             except ConnectionResetError:
                 print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
