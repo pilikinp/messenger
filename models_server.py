@@ -32,7 +32,8 @@ class Server(FilesRepository):
             'exit': self.exit,
             'get_chat_list': self.get_chat_list,
             'login_chat': self.login_chat,
-            'chat': self.chat
+            'chat': self.chat,
+            'search_contact':self.search_contact
         }
         super().__init__(clients_dict ={}, clients_list =[])
 
@@ -84,6 +85,16 @@ class Server(FilesRepository):
         print(msg)
         msg = self.msg_client.pack(msg)
         sock.send(msg)
+
+    def search_contact(self, *args):
+        sock, data = args[0], args[1]
+        data = self.msg_client.unpack(data)
+        contacts = {'found_users': []}
+        for contact in rep.get_all_user():
+            if data['contact'].lower() in contact.username.lower():
+                contacts['found_users'].append(contact.username)
+        contacts = self.msg_client.pack(contacts)
+        sock.send(contacts)
 
     def get_chat_list(self, *args):
         sock = args[0]

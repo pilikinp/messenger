@@ -40,7 +40,7 @@ class HistoryMessage(Base):
 class Repository():
 
     def __init__(self, name):
-        self.engine = create_engine('sqlite:///{}.db'.format(name))
+        self.engine = create_engine('sqlite:///{}.db?check_same_thread=False'.format(name))
         self.session = self.get_session()
         self.create_base()
 

@@ -16,7 +16,7 @@ class Client():
         # self._password = password
         self._host = host
         self._port = port
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.lock = threading.Lock()
         self.recv_queue = queue.Queue()
 
@@ -44,18 +44,20 @@ class Client():
         msg_recv = self.socket.recv(1024)
         msg_recv = self.msg_server.unpack(msg_recv)
         print(msg_recv)
-
         if msg_recv['response'] == '200':
             print(msg_recv['alert'])
             self.rep = Repository(self.username)
+            self.msg()
+            self.get_contact_list(self.socket)
         elif msg_recv['response'] == '201':
             print(msg_recv['alert'])
             print('Вы зарегистрировались под ником {}'.format(self.username))
             self.rep = Repository(self.username)
+            self.msg()
+            self.get_contact_list(self.socket)
         else:
             print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
-            sys.exit()
-        return msg_recv
+        self.recv_queue.put(msg_recv)
 
     def reg_guest(self):
         data = {'action': 'registration',
@@ -142,17 +144,22 @@ class Client():
                           'user': self.username}
         msg = self.msg_client.pack(msg)
         sock.send(msg)
-        # data = sock.recv(1024)
-        # data = self.msg_server.unpack(data)
-        # print('Кол-во контактов: ',data['quantity'])
-        # for cont in range(data['quantity']):
-        #     data = sock.recv(1024)
-        #     data = self.msg_client.unpack(data)
-        #     print('{}: {}'.format(cont+1, data['user']))
-        #     cont_l.append(data['user'])
-        #     self.rep.add_contact(data['user'])
-        # self.rep.session.commit()
-        # return cont_l
+
+    def search_contact(self, text):
+        data = {'users': []}
+        sock = self.socket
+        for contact in self.rep.contacts_list():
+            if text.lower() in contact.contact_name.lower():
+                data['users'].append(contact.contact_name)
+        if data['users']:
+            self.recv_queue.put(data)
+        else:
+            msg = {'action': 'search_contact',
+                   'contact': text}
+            msg = self.msg_client.pack(msg)
+            time.sleep(0.2)
+            sock.send(msg)
+
 
     def get_chat_list(self, *args):
         sock = args[0]
@@ -177,7 +184,7 @@ class Client():
                'to': to_,
                'from': username,
                'message': message}
-        self.rep.add_obj(HistoryMessage(msg['time'], self.username, msg['to'], msg['message']))
+        self.rep.add_obj(HistoryMessage(msg['time'], msg['from'], msg['to'], msg['message']))
         msg = self.msg_client.pack(msg)
         sock.send(msg)
 
@@ -187,7 +194,6 @@ class Client():
         while True:
             try:
                 sock.settimeout(2)
-                # with self.lock:
                 data = sock.recv(1024)
                 data = self.msg_server.unpack(data)
                 print(data)
@@ -199,13 +205,10 @@ class Client():
                 elif 'users' in data:
                     print('Кол-во контактов: ',len(data['users']))
                     for cont in data['users']:
-                        # data = sock.recv(1024)
-                        # data = self.msg_client.unpack(data)
-                        # print('{}: {}'.format(cont+1, data['user']))
-                        # cont_l.append(data['user'])
                         self.rep.add_contact(cont)
                     self.rep.session.commit()
-
+                elif 'found_users' in data:
+                    data['users'] = data['found_users']
                 self.recv_queue.put(data)
             except socket.timeout:
                 pass
@@ -251,9 +254,10 @@ class Client():
 
     def run(self, name, action):
         self.username = name
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self._host, self._port))
-        msg = self.connect_guest(action)
-        return msg
+        self.connect_guest(action)
+
 
 
 

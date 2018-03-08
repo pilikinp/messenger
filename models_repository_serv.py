@@ -106,6 +106,9 @@ class Repository:
     def update_users(self, username_old, username):
         pass
 
+    def get_all_user(self):
+        return self.session.query(Users).all()
+
     def get_user(self, username):
         result = self.session.query(Users).filter_by(username = username).first()
         return result
