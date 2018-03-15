@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'main_test.ui'
+# Form implementation generated from reading ui file 'main.ui'
 #
 # Created by: PyQt5 UI code generator 5.10
 #
@@ -72,8 +72,14 @@ class Ui_MainWindow(object):
         self.lineEditSearch.setObjectName("lineEditSearch")
         self.gridLayout.addWidget(self.lineEditSearch, 0, 0, 1, 1)
         self.listWidget_contacts = QtWidgets.QListWidget(self.tab_contacts)
-        self.listWidget_contacts.setMaximumSize(QtCore.QSize(16777215, 16777215))
         self.listWidget_contacts.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.listWidget_contacts.setAlternatingRowColors(True)
+        self.listWidget_contacts.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectItems)
+        self.listWidget_contacts.setIconSize(QtCore.QSize(0, 0))
+        self.listWidget_contacts.setTextElideMode(QtCore.Qt.ElideLeft)
+        self.listWidget_contacts.setLayoutMode(QtWidgets.QListView.SinglePass)
+        self.listWidget_contacts.setUniformItemSizes(True)
+        self.listWidget_contacts.setBatchSize(100)
         self.listWidget_contacts.setObjectName("listWidget_contacts")
         self.gridLayout.addWidget(self.listWidget_contacts, 1, 0, 1, 1)
         self.tabContacts.addTab(self.tab_contacts, "")
@@ -99,7 +105,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_4.addWidget(self.delContact)
         self.verticalLayout_2.addLayout(self.horizontalLayout_4)
         self.gridLayout_4.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
-        self.listWidget_contacts.raise_()
         self.widget_chat = QtWidgets.QWidget(self.splitter)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(250)
@@ -148,8 +153,6 @@ class Ui_MainWindow(object):
         self.verticalLayout.addLayout(self.horizontalLayout)
         self.gridLayout_3.addLayout(self.verticalLayout, 0, 0, 1, 1)
         self.gridLayout_5.addWidget(self.splitter, 0, 0, 1, 1)
-        self.splitter.raise_()
-        self.splitter.raise_()
         self.console = QtWidgets.QListWidget(self.splitter_2)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -158,13 +161,6 @@ class Ui_MainWindow(object):
         self.console.setSizePolicy(sizePolicy)
         self.console.setObjectName("console")
         self.gridLayout_6.addWidget(self.splitter_2, 0, 0, 1, 1)
-        self.splitter_2.raise_()
-        self.listWidget_message.raise_()
-        self.listWidget_message.raise_()
-        self.listWidget_message.raise_()
-        self.widget_chat.raise_()
-        self.widget_contacts.raise_()
-        self.widget_3.raise_()
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 769, 21))

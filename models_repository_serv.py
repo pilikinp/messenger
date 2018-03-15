@@ -35,6 +35,21 @@ class HistoryUsers(CBase):
         self.ip = ip
         self.id_user = id
 
+class HistoryMessage(CBase):
+    __tablename__ = 'HistoryMessage'
+    id = Column(Integer, primary_key=True)
+    time_ = Column(String)
+    from_id = Column(String)
+    to_id = Column(String)
+    message = Column(String)
+
+    def __init__(self, time_, from_id, to_id, message):
+        self.time_ = time_
+        self.from_id = from_id
+        self.to_id = to_id
+        self.message = message
+
+
 
 class UserContacts(CBase):
 
@@ -84,7 +99,7 @@ class UsersChat(CBase):
 class Repository:
 
     def __init__(self):
-        self.engine = create_engine(('sqlite:///server_db.db'))
+        self.engine = create_engine(('sqlite:///server_db.db?check_same_thread=False'))
         self.session = self.get_session()
         self.create_base()
 
@@ -102,6 +117,14 @@ class Repository:
 
     def del_users(self, username):
         pass
+
+    def get_history(self, username):
+        result = self.session.query(HistoryMessage).filter(HistoryMessage.to_id == username).all()
+        for i in self.session.query(HistoryMessage).filter(HistoryMessage.to_id == username).all():
+            self.session.delete(i)
+        self.session.commit()
+        return result
+
 
     def update_users(self, username_old, username):
         pass

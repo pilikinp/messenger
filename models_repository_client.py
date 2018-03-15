@@ -54,6 +54,7 @@ class Repository():
 
     def add_obj(self, obj):
         self.session.add(obj)
+        print('обавляем объект')
         self.session.commit()
 
     def add_contact(self, name):
@@ -68,8 +69,9 @@ class Repository():
     def contacts_list(self):
         return self.session.query(Contacts).all()
 
-    def get_history(self, name):
-        return self.session.query(HistoryMessage).filter_by(to_id = name).all()
+    def get_history(self, name , username):
+        return self.session.query(HistoryMessage).filter(((HistoryMessage.to_id == name) & (HistoryMessage.from_id == username)) | ((HistoryMessage.to_id == username) & (HistoryMessage.from_id == name))).all()
+        # Исправить поиск истории пока ищет только сообщения написанные только клиентом, сообщения для него не ищет
 
 
 if __name__ == '__main__':

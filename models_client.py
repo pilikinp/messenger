@@ -16,7 +16,6 @@ class Client():
         # self._password = password
         self._host = host
         self._port = port
-        # self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.lock = threading.Lock()
         self.recv_queue = queue.Queue()
 
@@ -101,11 +100,6 @@ class Client():
         data = self.action(sock, 'add_chat')
         print(data)
 
-    # def add_contact(self, *args):
-    #     sock = args[0]
-    #     data = self.action(sock, 'add_contact')
-    #     print(data)
-    #     self.get_contact_list(sock)
 
     def add_contact(self, contact):
         sock = self.socket
@@ -116,15 +110,6 @@ class Client():
                'contact': contact}
         msg = self.msg_client.pack(msg)
         sock.send(msg)
-        # data = sock.recv(1024)
-        # data = self.msg_server.unpack(data)
-        # return data
-
-    # def del_contact(self, *args):
-    #     sock = args[0]
-    #     data = self.action(sock, 'del_contact')
-    #     print(data)
-    #     self.get_contact_list(sock)
 
     def del_contact(self, contact):
         sock = self.socket
@@ -234,23 +219,6 @@ class Client():
         t2.start()
         t1.join()
         t2.join()
-
-    # def run(self):
-    #     with self.socket as sock:
-    #         command = input('Войти или зарегестрироваться (1/2): ')
-    #         if command.upper() == '1':
-    #             self.username = input('Введите имя пользователя: ')
-    #             sock.connect((self._host, self._port))
-    #             self.connect_guest('presence')
-    #         elif command.upper() == '2':
-    #             self.username = input('Введите имя пользователя: ')
-    #             sock.connect((self._host, self._port))
-    #             self.connect_guest('registration')
-    #         else:
-    #             print('неверная команда')
-    #             sys.exit()
-    #         while True:
-    #             self.command(sock)
 
     def run(self, name, action):
         self.username = name

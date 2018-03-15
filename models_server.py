@@ -2,11 +2,12 @@ import time
 import socket, select
 import logging
 import log_config
+import threading
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
 from models import JimAnswer, JimMessage, FilesRepository
-from models_repository_serv import Repository, Users, UserContacts, Chat, UsersChat
+from models_repository_serv import Repository, Users, UserContacts, Chat, UsersChat, HistoryMessage
 
 rep = Repository()
 
@@ -45,6 +46,19 @@ class Server(FilesRepository):
             data = self.msg_server.pack(data)
             sock.send(data)
             self._logger.debug('user: {} login'.format(account_name))
+            # history = rep.get_history(account_name)
+            # time.sleep(2)
+            # for mes in history:
+            #     msg = {'action': 'msg',
+            #            'time': mes.time_,
+            #            'to': mes.to_id,
+            #            'from': mes.from_id,
+            #            'message': mes.message}
+            #     msg = self.msg_client.pack(msg)
+            #     sock.send(msg)
+            #     print(msg)
+            #     time.sleep(1)
+
         elif rep.get_user(account_name) and rep.get_user(account_name).flag:
             data = self.msg_server.msg('409')
             data = self.msg_server.pack(data)
@@ -74,17 +88,27 @@ class Server(FilesRepository):
             if value is sock:
                 name_a = key
         result = rep.get_user_contacts(name_a)
-        # msg = self.msg_server.msg('202', len(result))
-        # msg = {'contact_list': len(result)}
-        # msg = self.msg_server.pack(msg)
-        # sock.send(msg)
         msg = {'users': []}
         for username in result:
-            # msg = {'users': str(username)}
             msg['users'].append(str(username))
         print(msg)
         msg = self.msg_client.pack(msg)
         sock.send(msg)
+
+        for key, value in self.clients_dict.items():
+            if value is sock:
+                name_a = key
+        history = rep.get_history(name_a)
+        for mes in history:
+            msg = {'action': 'msg',
+                   'time': mes.time_,
+                   'to': mes.to_id,
+                   'from': mes.from_id,
+                   'message': mes.message}
+            msg = self.msg_client.pack(msg)
+            sock.send(msg)
+            print(msg)
+            time.sleep(0.2)
 
     def search_contact(self, *args):
         sock, data = args[0], args[1]
@@ -174,6 +198,7 @@ class Server(FilesRepository):
             data = self.msg_server.msg('410')
             data = self.msg_server.pack(data)
             sock.send(data)
+            rep.add(HistoryMessage(msg['time'], msg['from'], msg['to'], msg['message']))
         else:
             data = self.msg_server.msg('404')
             data = self.msg_server.pack(data)
@@ -243,7 +268,9 @@ class Server(FilesRepository):
                 data = sock.recv(1024)
                 msg = self.msg_client.unpack(data)
                 print('что то пришло',msg)
-                self.commands[msg['action']](sock, data, requests)
+                # self.commands[msg['action']](sock, data, requests)
+                t = threading.Thread(target= self.commands[msg['action']], args=(sock, data, requests))
+                t.start()
             except ConnectionResetError:
                 print('Клиент {} {} откл'.format(sock.fileno(), sock.getpeername()))
                 for key, value in self.clients_dict.items():

@@ -5,7 +5,7 @@ import threading
 import time
 import select
 
-from PyQt5 import Qt, QtCore, QtGui, QtWidgets, uic
+from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from py_form import Ui_MainWindow as ui_class
 
 
@@ -38,7 +38,9 @@ class MyWindow(QtWidgets.QMainWindow):
     def chat(self):
         self.ui.listWidget_message.clear()
         name = self.ui.listWidget_contacts.currentItem().text()
-        history = self.monitor.client.rep.get_history(name)
+        name = name.split()[0]
+        self.ui.listWidget_contacts.currentItem().setText(name)
+        history = self.monitor.client.rep.get_history(name, self.monitor.client.username)
         print(history)
         for his in history:
             self.ui.listWidget_message.addItem('{} - {} - {}'.format(his.time_, his.from_id, his.message))
@@ -85,10 +87,15 @@ class MyWindow(QtWidgets.QMainWindow):
         except AttributeError:
             self.ui.console.addItem('Не выбран контакт')
 
-    @QtCore.pyqtSlot(str)
+    @QtCore.pyqtSlot(dict)
     def update_message(self, data):
-        self.ui.listWidget_message.addItem(data)
-        self.ui.listWidget_message.scrollToBottom()
+        if self.ui.listWidget_contacts.currentItem() and self.ui.listWidget_contacts.currentItem().text() == data['from']:
+            self.ui.listWidget_message.addItem('{} - {} - {}'.format(data['time'], data['from'], data['message']))
+            self.ui.listWidget_message.scrollToBottom()
+        else:
+            a = self.ui.listWidget_contacts.findItems(data['from'], QtCore.Qt.MatchContains)
+            self.ui.listWidget_contacts.item(self.ui.listWidget_contacts.row(a[0])).setText(
+                '{}         {}'.format(a[0].text().split()[0], 'Новое сообщение'))
 
     @QtCore.pyqtSlot(dict)
     def update_console(self, data):
@@ -138,7 +145,7 @@ class Monitor(QtCore.QObject):
 
     msg_client = JimMessage()
     msg_server = JimAnswer()
-    gotData = QtCore.pyqtSignal(str)
+    gotData = QtCore.pyqtSignal(dict)
     gotResp = QtCore.pyqtSignal(dict)
     gotCont = QtCore.pyqtSignal(dict)
 
@@ -156,7 +163,8 @@ class Monitor(QtCore.QObject):
             data = self.resv_queue.get()
             print(data)
             if 'action' in data and data['action'] == 'msg':
-                self.gotData.emit('{} - {} - {}'.format(data['time'], data['from'], data['message']))
+                # self.gotData.emit('{} - {} - {}'.format(data['time'], data['from'], data['message']))
+                self.gotData.emit(data)
             elif 'response' in data:
                 self.gotResp.emit(data)
             elif 'users' in data:
