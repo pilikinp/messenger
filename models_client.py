@@ -48,6 +48,8 @@ class Client():
             self.rep = Repository(self.username)
             self.msg()
             self.get_contact_list(self.socket)
+            time.sleep(0.2)
+            self.get_chat_list()
         elif msg_recv['response'] == '201':
             print(msg_recv['alert'])
             print('Вы зарегистрировались под ником {}'.format(self.username))
@@ -95,10 +97,13 @@ class Client():
     #     data = self.msg_server.unpack(data)
     #     return data
 
-    def add_chat(self, *args):
-        sock = args[0]
-        data = self.action(sock, 'add_chat')
-        print(data)
+    def add_chat(self, chat_name):
+        sock = self.socket
+        msg = {'action': 'add_chat',
+                'time': time.ctime(),
+               'chat': chat_name}
+        self.msg_client.pack(msg)
+        sock.send(msg)
 
 
     def add_contact(self, contact):
@@ -146,14 +151,19 @@ class Client():
             sock.send(msg)
 
 
-    def get_chat_list(self, *args):
-        sock = args[0]
-        data = self.action(sock, 'get_chat_list')
-        print('Кол-во чатов: ', data['quantity'])
-        for cont in range(data['quantity']):
-            data = sock.recv(1024)
-            data = self.msg_client.unpack(data)
-            print('{}: {}'.format(cont + 1, data['user']))
+    def get_chat_list(self):
+        sock = self.socket
+        # data = self.action(sock, 'get_chat_list')
+        msg = {'action': 'get_chat_list',
+               'time': time.ctime(),
+               'user': self.username}
+        msg = self.msg_client.pack(msg)
+        sock.send(msg)
+        # print('Кол-во чатов: ', data['quantity'])
+        # for cont in range(data['quantity']):
+        #     data = sock.recv(1024)
+        #     data = self.msg_client.unpack(data)
+        #     print('{}: {}'.format(cont + 1, data['user']))
 
     def exit(self, *args):
         sock = args[0]
@@ -229,3 +239,4 @@ class Client():
 
 
 
+# что за ошибка JSONDecodeError("Extra data", s, end)

@@ -34,6 +34,7 @@ class MyWindow(QtWidgets.QMainWindow):
         self.monitor.gotData.connect(self.update_message)
         self.monitor.gotResp.connect(self.update_console)
         self.monitor.gotCont.connect(self.update_contacts)
+        self.monitor.gotChat.connect(self.update_chats)
 
     def chat(self):
         self.ui.listWidget_message.clear()
@@ -50,7 +51,9 @@ class MyWindow(QtWidgets.QMainWindow):
         self.ui.listWidget_contacts.clear()
         self.monitor.client.get_contact_list(self.monitor.client.socket)
 
-
+    def get_chat_list(self):
+        self.ui.listWidget_chat.clear()
+        self.monitor.client.get_chat_list()
 
     def on_addContact_pressed(self):
         if self.ui.tabContacts.currentIndex() == 0:
@@ -63,27 +66,44 @@ class MyWindow(QtWidgets.QMainWindow):
             except AttributeError:
                 self.ui.console.addItem('Не выбран контакт')
         else:
-            self.ui.tabContacts.setCurrentIndex(1)
+            if self.ui.listWidget_chat.currentItem():
+                chat_name = self.ui.listWidget_chat.currentItem().text()
+                self.monitor.client.add_chat(chat_name)
+            else:
+                pass
+                # добавить открытие диалогового окна на добавление нового чата
 
     def on_delContact_pressed(self):
         if self.ui.tabContacts.currentIndex() == 0:
             try:
                 name = self.ui.listWidget_contacts.currentItem().text()
                 self.monitor.client.del_contact(name)
-                time.sleep(0.5) # Почему без данной задержки не работает
+                time.sleep(0.5) # Почему без данной задержки не работает. попробовать избавиться от задержек
                 self.get_contacts()
             except AttributeError:
                 self.ui.console.addItem('Не выбран контакт')
 
     def on_sendButton_pressed(self):
         try:
-            message = self.ui.lineEdit_message.text()
-            to_ = self.ui.listWidget_contacts.currentItem().text()
-            self.ui.listWidget_message.addItem('{} - {} - {}'.format(time.ctime(), self.monitor.client.username, message))
-            self.ui.listWidget_message.scrollToBottom()
-            self.monitor.client._send_message(self.monitor.client.socket, to_, message, self.monitor.client.username)
-            self.ui.lineEdit_message.clear()
-            self.ui.lineEdit_message.setFocus()
+            if self.ui.tabContacts.currentIndex() == 0:
+                message = self.ui.lineEdit_message.text()
+                to_ = self.ui.listWidget_contacts.currentItem().text()
+                ##############################################################
+                # Заготовка для изменения добавления контактов. Контакт добавляется если написать ему сообщение
+                # if to_ not in self.monitor.client.rep.contacts_list():
+                #     self.monitor.client.add_contact(to_)
+                #     # self.ui.lineEditSearch.clear()
+                #     time.sleep(0.5)
+                #     self.get_contacts()
+                #############################################################
+                self.ui.listWidget_message.addItem('{} - {} - {}'.format(time.ctime(), self.monitor.client.username, message))
+                self.ui.listWidget_message.scrollToBottom()
+                self.monitor.client._send_message(self.monitor.client.socket, to_, message, self.monitor.client.username)
+                self.ui.lineEdit_message.clear()
+                self.ui.lineEdit_message.setFocus()
+            else:
+                pass
+            # Добавить отправку сообщений в чаты
         except AttributeError:
             self.ui.console.addItem('Не выбран контакт')
 
@@ -112,6 +132,11 @@ class MyWindow(QtWidgets.QMainWindow):
         # self.ui.listWidget_contacts.clear()
         for contact in data['users']:
             self.ui.listWidget_contacts.addItem(str(contact))
+
+    @QtCore.pyqtSlot(dict)
+    def update_chats(self, data):
+        for chatname in data['chats']:
+            self.ui.listWidget_chat.addItem(str(chatname))
 
     def on_lineEditSearch_textChanged(self):
         try:
@@ -148,6 +173,7 @@ class Monitor(QtCore.QObject):
     gotData = QtCore.pyqtSignal(dict)
     gotResp = QtCore.pyqtSignal(dict)
     gotCont = QtCore.pyqtSignal(dict)
+    gotChat = QtCore.pyqtSignal(dict)
 
 
 
@@ -169,6 +195,8 @@ class Monitor(QtCore.QObject):
                 self.gotResp.emit(data)
             elif 'users' in data:
                 self.gotCont.emit(data)
+            elif 'chats' in data:
+                self.gotChat.emit(data)
             self.resv_queue.task_done()
 
 

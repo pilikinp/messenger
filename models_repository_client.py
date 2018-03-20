@@ -76,9 +76,9 @@ class Repository():
 
 if __name__ == '__main__':
     rep = Repository('pilik22')
-    rep.add_obj(Contacts('pilik22'))
+    # rep.add_obj(Contacts('pilik22'))
     # rep.del_model(Contacts)
-    # print(rep.contacts_list())
+    print(rep.contacts_list())
     # for i in range(10):
     #     rep.add_contact('pilik{}'.format(i))
-    print(rep.get_history('pilik26')[0].message)
+    # print(rep.get_history('pilik26')[0].message)

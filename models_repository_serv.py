@@ -81,7 +81,7 @@ class Chat(CBase):
         self.chat_name = chat_name
 
     def __repr__(self):
-        return self.chat_name
+        return '{}'.format(self.chat_name)
 
 class UsersChat(CBase):
     __tablename__ = 'UsersChat'
@@ -95,6 +95,9 @@ class UsersChat(CBase):
     def __init__(self, chat_id, user_id):
         self.chat_id = chat_id
         self.user_id = user_id
+
+    def __repr__(self):
+        return '{}'.format(self.chat_name)
 
 class Repository:
 
@@ -143,8 +146,12 @@ class Repository:
         result = self.session.query(UserContacts).filter_by(id_user= id).filter_by(id_contact= id_cont).first()
         return result
 
-    def get_chat_list(self):
-        result = self.session.query(Chat).all()
+    def create_chat(self, chat_name):
+        self.add(Chat(chat_name))
+
+    def get_chat_list(self, name_a):
+        id = self.get_user(name_a).id
+        result = self.session.query(UsersChat).filter(UsersChat.user_id == id).all()
         return result
 
     def get_chat(self, chat_name):
@@ -200,15 +207,16 @@ if __name__ == '__main__':
     #
     # print(rep.get_user_contacts('pilik14'))
     # result = rep.get_user_contacts('pilik14')
-    print(rep.session.query(UserContacts).get(2).id_user)
-    print(rep.session.query(UserContacts).get(2).contact_name)
-    # print(rep.session.query(Users).get(18).contacts)
-    for i in rep.get_chat_list():
-        print('room' == str(i))
-    print(rep.get_chat_list())
-    print('room' in rep.get_chat_list())
-    for i in rep.get_user_in_chat('room'):
-        print(i.user_name)
-    print(rep.session.query(UsersChat).filter_by(user_id =12).first())
-    rep.session.delete(rep.session.query(UsersChat).filter_by(user_id=rep.get_user('pilik1').id).first())
-    rep.session.commit()
+    # print(rep.session.query(UserContacts).get(2).id_user)
+    # print(rep.session.query(UserContacts).get(2).contact_name)
+    # # print(rep.session.query(Users).get(18).contacts)
+    # for i in rep.get_chat_list():
+    #     print('room' == str(i))
+    # print(rep.get_chat_list())
+    # print('room' in rep.get_chat_list())
+    # for i in rep.get_user_in_chat('room'):
+    #     print(i.user_name)
+    # print(rep.session.query(UsersChat).filter_by(user_id =12).first())
+    # rep.session.delete(rep.session.query(UsersChat).filter_by(user_id=rep.get_user('pilik1').id).first())
+    # rep.session.commit()
+    print(rep.get_chat_list('pilik2'))

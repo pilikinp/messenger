@@ -179,8 +179,22 @@
                   <string>Чаты</string>
                  </attribute>
                  <layout class="QGridLayout" name="gridLayout_2">
+                  <item row="1" column="0">
+                   <widget class="QListWidget" name="listWidget_chat">
+                    <property name="frameShape">
+                     <enum>QFrame::NoFrame</enum>
+                    </property>
+                   </widget>
+                  </item>
                   <item row="0" column="0">
-                   <widget class="QListWidget" name="listWidget"/>
+                   <widget class="QLineEdit" name="lineEdit_search_chat">
+                    <property name="frame">
+                     <bool>false</bool>
+                    </property>
+                    <property name="placeholderText">
+                     <string>поиск</string>
+                    </property>
+                   </widget>
                   </item>
                  </layout>
                 </widget>

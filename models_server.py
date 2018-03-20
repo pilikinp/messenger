@@ -110,6 +110,12 @@ class Server(FilesRepository):
             print(msg)
             time.sleep(0.2)
 
+    def get_name(self, sock):
+        for key, value in self.clients_dict.items():
+            if value is sock:
+                name_a = key
+        return name_a
+
     def search_contact(self, *args):
         sock, data = args[0], args[1]
         data = self.msg_client.unpack(data)
@@ -122,15 +128,22 @@ class Server(FilesRepository):
 
     def get_chat_list(self, *args):
         sock = args[0]
-        result = rep.get_chat_list()
-        msg = self.msg_server.msg('202', len(result))
-        msg = self.msg_server.pack(msg)
-        sock.send(msg)
+        name_a = self.get_name(sock)
+        result = rep.get_chat_list(name_a)
+        msg = {'chats': []}
         for chatname in result:
-            msg = self.msg_client.msg('get_chat_list', str(chatname))
-            print(msg)
-            msg = self.msg_client.pack(msg)
-            sock.send(msg)
+            msg['chats'].append(str(chatname))
+        print(msg)
+        msg = self.msg_client.pack(msg)
+        sock.send(msg)
+        # msg = self.msg_server.msg('202', len(result))
+        # msg = self.msg_server.pack(msg)
+        # sock.send(msg)
+        # for chatname in result:
+        #     msg = self.msg_client.msg('get_chat_list', str(chatname))
+        #     print(msg)
+        #     msg = self.msg_client.pack(msg)
+        #     sock.send(msg)
 
     def add_chat(self,*args):
         sock = args[0]
