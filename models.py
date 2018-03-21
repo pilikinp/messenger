@@ -152,6 +152,7 @@ class JimAnswer(JimMessage):
     code = {
         '100': 'Базовое уведомление',
         '101': 'Важное уведомление',
+        '102': 'В сети',
         '200': 'Ок',
         '201': 'Объект создан',
         '202': 'Подтверждение',
@@ -165,9 +166,9 @@ class JimAnswer(JimMessage):
         '500': 'Ошибка сервера'
     }
 
-    def msg(self, code, quantity=''):
+    def msg(self, code, username=''):
         msg = {'response': code,
                'time': time.ctime(),
                'alert': self.code[code],
-               'quantity': quantity}
+               'user': username}
         return msg

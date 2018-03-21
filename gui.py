@@ -5,6 +5,7 @@ import threading
 import time
 import select
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets, uic
 from py_form import Ui_MainWindow as ui_class
 
@@ -121,6 +122,8 @@ class MyWindow(QtWidgets.QMainWindow):
     def update_console(self, data):
         self.ui.console.addItem('{} - {} - {}'.format(data['response'], data['time'], data['alert']))
         self.ui.console.scrollToBottom()
+        if data['response'] == '102':
+            self.setWindowTitle('Messenger - {}'.format(data['user']))
         self.ui.statusbar.showMessage('{} - {} - {}'.format(data['response'], data['time'], data['alert']))
         # if data['response'] == '402':
         #     self.thread.quit()
@@ -130,6 +133,7 @@ class MyWindow(QtWidgets.QMainWindow):
     @QtCore.pyqtSlot(dict)
     def update_contacts(self, data):
         # self.ui.listWidget_contacts.clear()
+        # self.setWindowTitle()
         for contact in data['users']:
             self.ui.listWidget_contacts.addItem(str(contact))
 
@@ -153,11 +157,12 @@ class MyWindow(QtWidgets.QMainWindow):
         dialog = uic.loadUi('dial.ui')
         self.monitor.moveToThread(self.thread)
         self.thread.started.connect(self.monitor.recv_msg)
-        dialog.line.setFocus()
+        dialog.lineEdit_login.setFocus()
 
         def reg():
-            name = dialog.line.text()
-            self.monitor.client.run(name, action)
+            name = dialog.lineEdit_login.text()
+            password = dialog.lineEdit_password.text()
+            self.monitor.client.run(name, password, action)
             self.thread.start()
 
         dialog.pushOk.clicked.connect(reg)

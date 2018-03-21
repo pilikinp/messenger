@@ -366,6 +366,10 @@
     </property>
     <addaction name="login"/>
     <addaction name="registration"/>
+    <addaction name="separator"/>
+    <addaction name="security"/>
+    <addaction name="separator"/>
+    <addaction name="quit"/>
    </widget>
    <addaction name="menu"/>
   </widget>
@@ -378,6 +382,34 @@
   <action name="registration">
    <property name="text">
     <string>Регистрация</string>
+   </property>
+  </action>
+  <action name="security">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>шифровать сообщения</string>
+   </property>
+   <property name="shortcutContext">
+    <enum>Qt::WidgetShortcut</enum>
+   </property>
+   <property name="autoRepeat">
+    <bool>true</bool>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::TextHeuristicRole</enum>
+   </property>
+   <property name="iconVisibleInMenu">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="quit">
+   <property name="text">
+    <string>Отключиться</string>
    </property>
   </action>
  </widget>

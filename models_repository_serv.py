@@ -10,11 +10,12 @@ class Users(CBase):
     __tablename__ = 'users'
     id = Column(Integer(), primary_key= True)
     username = Column(Unicode(), nullable= False, unique= True)
-    # socket = Column(BLOB)
+    password = Column(String, nullable= False)
     flag = Column(Boolean())
 
-    def __init__(self, username, flag = 0):
+    def __init__(self, username, password, flag = 0):
         self.username = username
+        self.password = password
         self.flag = flag
 
     def __repr__(self):

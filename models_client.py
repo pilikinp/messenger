@@ -1,6 +1,7 @@
 import time, sys
 import socket
 import threading, queue
+import hashlib
 
 from models import JimMessage, JimAnswer
 from models_repository_client import Repository, Contacts, HistoryMessage
@@ -18,6 +19,7 @@ class Client():
         self._port = port
         self.lock = threading.Lock()
         self.recv_queue = queue.Queue()
+        self.secret = 'secretkey'
 
         # self.command_dict = {
         #     '1': self.get_contact_list,
@@ -34,10 +36,16 @@ class Client():
     def socket(self):
         return self._sock
 
-    def connect_guest(self, action):
+    def connect_guest(self, action, password):
+        pas = hashlib.sha256()
+        pas.update(self.username.encode())
+        pas.update(password.encode())
+        pas.update(self.secret.encode())
+        password = pas.hexdigest()
         data = {'action': action,
                 'time': time.ctime(),
-                'user': self.username}
+                'user': self.username,
+                'password': password}
         # print(data)
         self.socket.send(self.msg_client.pack(data))
         msg_recv = self.socket.recv(1024)
@@ -230,11 +238,11 @@ class Client():
         t1.join()
         t2.join()
 
-    def run(self, name, action):
+    def run(self, name, password, action):
         self.username = name
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self._host, self._port))
-        self.connect_guest(action)
+        self.connect_guest(action, password)
 
 
 

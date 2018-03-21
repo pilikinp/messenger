@@ -38,26 +38,15 @@ class Server(FilesRepository):
         }
         super().__init__(clients_dict ={}, clients_list =[])
 
-    def presence(self, sock, time_, ip, account_name):
-        if rep.get_user(account_name) and rep.get_user(account_name).flag is False:
+    def presence(self, sock, time_, ip, account_name, password):
+        if rep.get_user(account_name) and rep.get_user(account_name).flag is False and \
+                rep.get_user(account_name).password == password:
             rep.login(time_, ip, account_name)
             self.add_user(account_name, sock)
-            data = self.msg_server.msg('200')
+            data = self.msg_server.msg('102', username= account_name)
             data = self.msg_server.pack(data)
             sock.send(data)
             self._logger.debug('user: {} login'.format(account_name))
-            # history = rep.get_history(account_name)
-            # time.sleep(2)
-            # for mes in history:
-            #     msg = {'action': 'msg',
-            #            'time': mes.time_,
-            #            'to': mes.to_id,
-            #            'from': mes.from_id,
-            #            'message': mes.message}
-            #     msg = self.msg_client.pack(msg)
-            #     sock.send(msg)
-            #     print(msg)
-            #     time.sleep(1)
 
         elif rep.get_user(account_name) and rep.get_user(account_name).flag:
             data = self.msg_server.msg('409')
@@ -68,9 +57,9 @@ class Server(FilesRepository):
             data = self.msg_server.pack(data)
             sock.send(data)
 
-    def registration(self, sock, time_, ip, account_name):
+    def registration(self, sock, time_, ip, account_name, password):
         if rep.get_user(account_name) is None:
-            rep.add(Users(account_name))
+            rep.add(Users(account_name, password))
             rep.login(time_, ip, account_name)
             self.add_user(account_name, sock)
             data = self.msg_server.msg('200')
@@ -323,7 +312,7 @@ class Server(FilesRepository):
                 msg = sock.recv(2048)
                 msg = self.msg_client.unpack(msg)
                 print(msg)
-                self.commands[msg['action']](sock, msg['time'], addr, msg['user'])
+                self.commands[msg['action']](sock, msg['time'], addr, msg['user'], msg['password'])
             finally:
                 wait = 0
                 r = []

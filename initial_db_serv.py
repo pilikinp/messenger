@@ -11,7 +11,7 @@ cursor.execute("drop table if exists history_users")
 cursor.execute("drop table if exists user_contacts")
 cursor.execute("drop table if exists Chat")
 cursor.execute("drop table if exists UsersChat")
-cursor.execute("create table users (id integer primary key autoincrement, username text UNIQUE, socket, "
+cursor.execute("create table users (id integer primary key autoincrement, username text UNIQUE, password text NOT NULL , "
                "flag integer NOT NULL )")
 cursor.execute("create table history_users (id integer primary key autoincrement, time text, "
                "id_user integer REFERENCES users (id))")
@@ -23,13 +23,13 @@ cursor.execute("create table UsersChat (id integer primary key autoincrement, "
                "chat_id integer references Chat (id)  , user_id integer REFERENCES users (id), UNIQUE (chat_id, user_id))")
 
 conn.commit()
-
-rep = Repository()
-for i in range(50):
-    rep.add(Users('pilik{}'.format(i)))
-
-for i in range(random.randint(5, 100)):
-    try:
-        rep.add(UserContacts(random.randint(0,50),random.randint(0,50)))
-    except IntegrityError as err:
-        rep.session.rollback()
+#
+# rep = Repository()
+# for i in range(50):
+#     rep.add(Users('pilik{}'.format(i)))
+#
+# for i in range(random.randint(5, 100)):
+#     try:
+#         rep.add(UserContacts(random.randint(0,50),random.randint(0,50)))
+#     except IntegrityError as err:
+#         rep.session.rollback()
