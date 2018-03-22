@@ -17,6 +17,8 @@ from models_repository_client import Repository, Contacts, HistoryMessage
 
 class MyWindow(QtWidgets.QMainWindow):
 
+    flag = False
+
     def __init__(self, parent = None):
 
         super().__init__(parent)
@@ -97,9 +99,11 @@ class MyWindow(QtWidgets.QMainWindow):
                 #     time.sleep(0.5)
                 #     self.get_contacts()
                 #############################################################
-                self.ui.listWidget_message.addItem('{} - {} - {}'.format(time.ctime(), self.monitor.client.username, message))
+                self.ui.listWidget_message.addItem(
+                    '{} - {} - {}'.format(time.ctime(), self.monitor.client.username, message))
                 self.ui.listWidget_message.scrollToBottom()
-                self.monitor.client._send_message(self.monitor.client.socket, to_, message, self.monitor.client.username)
+                self.monitor.client._send_message(
+                    self.monitor.client.socket, to_, message, self.monitor.client.username, self.ui.security.isChecked())
                 self.ui.lineEdit_message.clear()
                 self.ui.lineEdit_message.setFocus()
             else:
@@ -132,8 +136,7 @@ class MyWindow(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(dict)
     def update_contacts(self, data):
-        # self.ui.listWidget_contacts.clear()
-        # self.setWindowTitle()
+        self.ui.listWidget_contacts.clear()
         for contact in data['users']:
             self.ui.listWidget_contacts.addItem(str(contact))
 

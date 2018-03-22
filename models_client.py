@@ -6,6 +6,7 @@ import hashlib
 from models import JimMessage, JimAnswer
 from models_repository_client import Repository, Contacts, HistoryMessage
 
+import crypt
 
 
 class Client():
@@ -14,23 +15,11 @@ class Client():
     msg_server = JimAnswer()
 
     def __init__(self, host, port):
-        # self._password = password
         self._host = host
         self._port = port
         self.lock = threading.Lock()
         self.recv_queue = queue.Queue()
         self.secret = 'secretkey'
-
-        # self.command_dict = {
-        #     '1': self.get_contact_list,
-        #     '2': self.msg,
-        #     '3': self.msg_to,
-        #     '4': self.add_chat,
-        #     '5': self.login_chat,
-        #     '6': self.get_chat_list,
-        #     '7': self.add_contact,
-        #     '8':self.del_contact,
-        #     '9': self.exit}
 
     @property
     def socket(self):
@@ -42,19 +31,25 @@ class Client():
         pas.update(password.encode())
         pas.update(self.secret.encode())
         password = pas.hexdigest()
+        if action == 'registration':
+            publickey = crypt.create_rsa(self.username)
+        else:
+            publickey = crypt.get_publickey(self.username)
         data = {'action': action,
                 'time': time.ctime(),
                 'user': self.username,
-                'password': password}
-        # print(data)
+                'password': password,
+                'publickey': publickey}
         self.socket.send(self.msg_client.pack(data))
+        print('сообщение отправлено')
         msg_recv = self.socket.recv(1024)
         msg_recv = self.msg_server.unpack(msg_recv)
         print(msg_recv)
-        if msg_recv['response'] == '200':
+        if msg_recv['response'] == '102':
             print(msg_recv['alert'])
             self.rep = Repository(self.username)
             self.msg()
+            print('запускаю получение контактов')
             self.get_contact_list(self.socket)
             time.sleep(0.2)
             self.get_chat_list()
@@ -63,9 +58,9 @@ class Client():
             print('Вы зарегистрировались под ником {}'.format(self.username))
             self.rep = Repository(self.username)
             self.msg()
-            self.get_contact_list(self.socket)
-        else:
-            print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
+            # self.get_contact_list(self.socket)
+        # else:
+        #     print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
         self.recv_queue.put(msg_recv)
 
     def reg_guest(self):
@@ -84,27 +79,6 @@ class Client():
             print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
             sys.exit()
 
-    # def command(self,*args):
-    #     sock = args[0]
-    #     print('Список комманд: \n1. получить/обновить список контактов \n2. написать сообщение \n'
-    #           '3. написать сообщение в личку \n4. создать чат \n5. войти в чат \n'
-    #           '6. получить список чатов \n7. добавить контакт \n8. удалить контакт\n9. выход')
-    #     while True:
-    #         command = input()
-    #         if command in ['1','2','3','4','5','6','7','8','9']:
-    #             break
-    #         else:
-    #             print('неправильно указана команда')
-    #     self.command_dict[command](sock)
-    #
-    # def action(self, sock, action):
-    #     msg = self.msg_client.msg(action, self.username)
-    #     msg = self.msg_client.pack(msg)
-    #     sock.send(msg)
-    #     data = sock.recv(1024)
-    #     data = self.msg_server.unpack(data)
-    #     return data
-
     def add_chat(self, chat_name):
         sock = self.socket
         msg = {'action': 'add_chat',
@@ -116,7 +90,6 @@ class Client():
 
     def add_contact(self, contact):
         sock = self.socket
-
         msg = {'action': 'add_contact',
                'time': time.ctime(),
                'user': self.username,
@@ -142,8 +115,10 @@ class Client():
                           'user': self.username}
         msg = self.msg_client.pack(msg)
         sock.send(msg)
+        print('get_contacts')
 
     def search_contact(self, text):
+        # некоректно работает поиск, требуется переделать!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         data = {'users': []}
         sock = self.socket
         for contact in self.rep.contacts_list():
@@ -161,17 +136,11 @@ class Client():
 
     def get_chat_list(self):
         sock = self.socket
-        # data = self.action(sock, 'get_chat_list')
         msg = {'action': 'get_chat_list',
                'time': time.ctime(),
                'user': self.username}
         msg = self.msg_client.pack(msg)
         sock.send(msg)
-        # print('Кол-во чатов: ', data['quantity'])
-        # for cont in range(data['quantity']):
-        #     data = sock.recv(1024)
-        #     data = self.msg_client.unpack(data)
-        #     print('{}: {}'.format(cont + 1, data['user']))
 
     def exit(self, *args):
         sock = args[0]
@@ -181,15 +150,29 @@ class Client():
         sys.exit()
 
     def _send_message(self, *args):
-        sock, to_, message, username = args
+        sock, to_, message, username, flag = args
+        sessionkey = ''
+        signature = ''
+        self.rep.add_obj(HistoryMessage(time.ctime(), username, to_, message))
+        if flag:
+            publickey = self.rep.get_publickey(to_)
+            data = crypt.create_msg(message, self.username, publickey)
+            print(data)
+            message = data['message']
+            sessionkey = data['session key']
+            # signature = data['signature']
         msg = {'action': 'msg',
                'time': time.ctime(),
                'to': to_,
                'from': username,
-               'message': message}
-        self.rep.add_obj(HistoryMessage(msg['time'], msg['from'], msg['to'], msg['message']))
+               'message': message,
+               'session key': sessionkey,
+               # 'signature': signature,
+               'flag': flag}
+        # self.rep.add_obj(HistoryMessage(msg['time'], msg['from'], msg['to'], msg['message']))
         msg = self.msg_client.pack(msg)
         sock.send(msg)
+
 
     def _get_message(self):
         sock = self.socket
@@ -197,18 +180,25 @@ class Client():
         while True:
             try:
                 sock.settimeout(2)
-                data = sock.recv(1024)
+                data = sock.recv(2048)
                 data = self.msg_server.unpack(data)
                 print(data)
                 if 'action' in data:
-                    print(data['time'], data['from'], data['message'])
-                    self.rep.add_obj(HistoryMessage(data['time'], data['from'], data['to'], data['message']))
+                    if data['action'] == 'msg' and data['flag']:
+                        dec = crypt.decript_msg(data, self.username)
+                        data['message'] = dec.decode()
+                        self.rep.add_obj(HistoryMessage(data['time'], data['from'], data['to'], data['message']))
+                    else:
+                        print(data['time'], data['from'], data['message'])
+                        self.rep.add_obj(HistoryMessage(data['time'], data['from'], data['to'], data['message']))
                 elif 'response' in data:
                     print(data['response'], data['time'], data['alert'])
                 elif 'users' in data:
                     print('Кол-во контактов: ',len(data['users']))
-                    for cont in data['users']:
-                        self.rep.add_contact(cont)
+                    # for cont in data['users']:
+                    #     self.rep.add_contact(cont)
+                    for name, publickey in data['users'].items():
+                        self.rep.add_contact(name, publickey)
                     self.rep.session.commit()
                 elif 'found_users' in data:
                     data['users'] = data['found_users']

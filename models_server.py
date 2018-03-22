@@ -38,7 +38,8 @@ class Server(FilesRepository):
         }
         super().__init__(clients_dict ={}, clients_list =[])
 
-    def presence(self, sock, time_, ip, account_name, password):
+    def presence(self, *args):
+        sock, time_, ip, account_name, password, publickey = args
         if rep.get_user(account_name) and rep.get_user(account_name).flag is False and \
                 rep.get_user(account_name).password == password:
             rep.login(time_, ip, account_name)
@@ -57,9 +58,10 @@ class Server(FilesRepository):
             data = self.msg_server.pack(data)
             sock.send(data)
 
-    def registration(self, sock, time_, ip, account_name, password):
+    def registration(self, *args):
+        sock, time_, ip, account_name, password, publickey = args
         if rep.get_user(account_name) is None:
-            rep.add(Users(account_name, password))
+            rep.add(Users(account_name, password, publickey))
             rep.login(time_, ip, account_name)
             self.add_user(account_name, sock)
             data = self.msg_server.msg('200')
@@ -76,17 +78,17 @@ class Server(FilesRepository):
         for key, value in self.clients_dict.items():
             if value is sock:
                 name_a = key
-        result = rep.get_user_contacts(name_a)
-        msg = {'users': []}
-        for username in result:
-            msg['users'].append(str(username))
+        msg = rep.get_user_contacts(name_a)
+        # msg = {'users': []}
+        # for username in result:
+        #     msg['users'].append(str(username))
         print(msg)
         msg = self.msg_client.pack(msg)
         sock.send(msg)
 
-        for key, value in self.clients_dict.items():
-            if value is sock:
-                name_a = key
+        # for key, value in self.clients_dict.items():
+        #     if value is sock:
+        #         name_a = key
         history = rep.get_history(name_a)
         for mes in history:
             msg = {'action': 'msg',
@@ -267,7 +269,7 @@ class Server(FilesRepository):
         requests = {}
         for sock in cl:
             try:
-                data = sock.recv(1024)
+                data = sock.recv(4096)
                 msg = self.msg_client.unpack(data)
                 print('что то пришло',msg)
                 # self.commands[msg['action']](sock, data, requests)
@@ -309,10 +311,11 @@ class Server(FilesRepository):
                 pass
                 # print('timeout вышел')  # timeout вышел
             else:
-                msg = sock.recv(2048)
+                msg = sock.recv(4096)
+                print('сообщение принято')
                 msg = self.msg_client.unpack(msg)
                 print(msg)
-                self.commands[msg['action']](sock, msg['time'], addr, msg['user'], msg['password'])
+                self.commands[msg['action']](sock, msg['time'], addr, msg['user'], msg['password'], msg['publickey'])
             finally:
                 wait = 0
                 r = []

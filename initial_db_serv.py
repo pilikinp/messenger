@@ -12,7 +12,7 @@ cursor.execute("drop table if exists user_contacts")
 cursor.execute("drop table if exists Chat")
 cursor.execute("drop table if exists UsersChat")
 cursor.execute("create table users (id integer primary key autoincrement, username text UNIQUE, password text NOT NULL , "
-               "flag integer NOT NULL )")
+               "publickey text NOT NULL, flag integer NOT NULL )")
 cursor.execute("create table history_users (id integer primary key autoincrement, time text, "
                "id_user integer REFERENCES users (id))")
 cursor.execute("create table user_contacts (id integer primary key autoincrement, "

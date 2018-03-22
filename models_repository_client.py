@@ -16,9 +16,11 @@ class Contacts(Base):
     __tablename__ = 'Contacts'
     id = Column(Integer, primary_key= True)
     contact_name = Column(String)
+    publickey = Column(String)
 
-    def __init__(self, contact_name):
+    def __init__(self, contact_name, publickey):
         self.contact_name = contact_name
+        self.publickey = publickey
 
     def __repr__(self):
         return self.contact_name
@@ -57,8 +59,8 @@ class Repository():
         print('обавляем объект')
         self.session.commit()
 
-    def add_contact(self, name):
-        self.session.add(Contacts(name))
+    def add_contact(self, name, publickey):
+        self.session.add(Contacts(name, publickey))
 
     def del_model(self, model):
         models = self.session.query(model)
@@ -73,6 +75,8 @@ class Repository():
         return self.session.query(HistoryMessage).filter(((HistoryMessage.to_id == name) & (HistoryMessage.from_id == username)) | ((HistoryMessage.to_id == username) & (HistoryMessage.from_id == name))).all()
         # Исправить поиск истории пока ищет только сообщения написанные только клиентом, сообщения для него не ищет
 
+    def get_publickey(self,name):
+        return self.session.query(Contacts).filter(Contacts.contact_name == name).first().publickey
 
 if __name__ == '__main__':
     rep = Repository('pilik22')

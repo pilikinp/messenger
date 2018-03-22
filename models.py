@@ -2,6 +2,7 @@ import sys, time
 import json
 import socket
 import logging
+import pickle
 
 
 class Repository:
@@ -139,12 +140,14 @@ class JimMessage():
 
     def pack(self, msg):
         '''Упаковываем сообщение'''
-        data = json.dumps(msg).encode()
+        # data = json.dumps(msg).encode()
+        data = pickle.dumps(msg)
         return data
 
     def unpack(self, data):
         '''Распаковка сообщения'''
-        data = json.loads(data.decode())
+        # data = json.loads(data.decode())
+        data = pickle.loads(data)
         return data
 
 

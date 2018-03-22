@@ -11,11 +11,13 @@ class Users(CBase):
     id = Column(Integer(), primary_key= True)
     username = Column(Unicode(), nullable= False, unique= True)
     password = Column(String, nullable= False)
+    publickey = Column(String, nullable= False)
     flag = Column(Boolean())
 
-    def __init__(self, username, password, flag = 0):
+    def __init__(self, username, password, publickey, flag = 0):
         self.username = username
         self.password = password
+        self.publickey = publickey
         self.flag = flag
 
     def __repr__(self):
@@ -187,8 +189,18 @@ class Repository:
         self.session.commit()
 
     def get_user_contacts(self,user_name):
+        data = {'users': {}}
         id = self.session.query(Users).filter_by(username= user_name).first().id
+        print(id)
         result = self.session.query(UserContacts).filter_by(id_user= id).all()
+        print(result)
+        for user in result:
+            publickey = self.get_publickey(str(user))
+            data['users'][str(user)] = publickey
+        return data
+
+    def get_publickey(self, username):
+        result = self.session.query(Users).filter(Users.username == username).first().publickey
         return result
 
     def add_user_in_chat(self, chat, username):
@@ -220,4 +232,6 @@ if __name__ == '__main__':
     # print(rep.session.query(UsersChat).filter_by(user_id =12).first())
     # rep.session.delete(rep.session.query(UsersChat).filter_by(user_id=rep.get_user('pilik1').id).first())
     # rep.session.commit()
-    print(rep.get_chat_list('pilik2'))
+    # print(rep.get_chat_list('pilik2'))
+    print(rep.get_user_contacts('pilik'))
+    print(rep.get_publickey('pilik'))
