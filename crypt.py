@@ -20,7 +20,7 @@ def create_rsa(username):
         f.write(bytes(publickey.exportKey('PEM')))
     return publickey.exportKey('PEM').decode()
 
-def create_msg(plaintext, username, publickey):
+def create_msg(plaintext, publickey):
     '''функция создания шифрованного сообщения
     plaintext - сообщение которое нужно зашифровать
     username - пользователь который шифрует сообщение

@@ -156,7 +156,7 @@ class Client():
         self.rep.add_obj(HistoryMessage(time.ctime(), username, to_, message))
         if flag:
             publickey = self.rep.get_publickey(to_)
-            data = crypt.create_msg(message, self.username, publickey)
+            data = crypt.create_msg(message, publickey)
             print(data)
             message = data['message']
             sessionkey = data['session key']

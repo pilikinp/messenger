@@ -64,7 +64,7 @@ class Server(FilesRepository):
             rep.add(Users(account_name, password, publickey))
             rep.login(time_, ip, account_name)
             self.add_user(account_name, sock)
-            data = self.msg_server.msg('200')
+            data = self.msg_server.msg('201')
             data = self.msg_server.pack(data)
             sock.send(data)
             self._logger.debug('user: {} login'.format(account_name))
