@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, Boolean, ForeignKey, String, MetaData
+from sqlalchemy import Column, Integer, Unicode, UniqueConstraint, Boolean, ForeignKey, BLOB, String, MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 
@@ -12,12 +12,14 @@ class Users(CBase):
     username = Column(Unicode(), nullable= False, unique= True)
     password = Column(String, nullable= False)
     publickey = Column(String, nullable= False)
+    avatar = Column(BLOB)
     flag = Column(Boolean())
 
-    def __init__(self, username, password, publickey, flag = 0):
+    def __init__(self, username, password, publickey, avatar, flag = 0):
         self.username = username
         self.password = password
         self.publickey = publickey
+        self.avatar = avatar
         self.flag = flag
 
     def __repr__(self):
@@ -45,12 +47,14 @@ class HistoryMessage(CBase):
     from_id = Column(String)
     to_id = Column(String)
     message = Column(String)
+    flag = Column(Boolean)
 
-    def __init__(self, time_, from_id, to_id, message):
+    def __init__(self, time_, from_id, to_id, message, flag):
         self.time_ = time_
         self.from_id = from_id
         self.to_id = to_id
         self.message = message
+        self.flag = flag
 
 
 
@@ -105,7 +109,7 @@ class UsersChat(CBase):
 class Repository:
 
     def __init__(self):
-        self.engine = create_engine(('sqlite:///server_db.db?check_same_thread=False'))
+        self.engine = create_engine(('sqlite:///repository/db_serv/server_db.db?check_same_thread=False'))
         self.session = self.get_session()
         self.create_base()
 
@@ -196,11 +200,16 @@ class Repository:
         print(result)
         for user in result:
             publickey = self.get_publickey(str(user))
-            data['users'][str(user)] = publickey
+            avatar = self.get_avatar(str(user))
+            data['users'][str(user)] = [publickey, avatar]
         return data
 
     def get_publickey(self, username):
         result = self.session.query(Users).filter(Users.username == username).first().publickey
+        return result
+
+    def get_avatar(self,username):
+        result = self.session.query(Users).filter(Users.username == username).first().avatar
         return result
 
     def add_user_in_chat(self, chat, username):
@@ -233,5 +242,5 @@ if __name__ == '__main__':
     # rep.session.delete(rep.session.query(UsersChat).filter_by(user_id=rep.get_user('pilik1').id).first())
     # rep.session.commit()
     # print(rep.get_chat_list('pilik2'))
-    print(rep.get_user_contacts('pilik'))
-    print(rep.get_publickey('pilik'))
+    print(rep.get_user_contacts('pilik1'))
+    print(rep.get_publickey('pilik1'))

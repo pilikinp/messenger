@@ -1,15 +1,26 @@
-import sqlite3
-import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Table, Column, Integer, Numeric, String, MetaData, ForeignKey, Text
-from models_repository_serv import Repository, Users, UserContacts
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, BLOB
 from sqlalchemy.ext.declarative import declarative_base
 
-import time
-
 Base = declarative_base()
+
+class User(Base):
+    __tablename__ = 'User'
+    login = Column(String, primary_key= True)
+    name = Column(String)
+    last_name = Column(String)
+    email = Column(String)
+    phone = Column(String)
+    avatar = Column(BLOB)
+
+    def __init__(self, login, name = None, last_name = None, email = None, phone = None, avatar = None):
+        self.login = login
+        self.name = name
+        self.last_name = last_name
+        self.email = email
+        self.phone = phone
+        self.avatar = avatar
 
 
 class Contacts(Base):
@@ -17,10 +28,12 @@ class Contacts(Base):
     id = Column(Integer, primary_key= True)
     contact_name = Column(String)
     publickey = Column(String)
+    avatar = Column(BLOB)
 
-    def __init__(self, contact_name, publickey):
+    def __init__(self, contact_name, publickey, avatar = b'ava.png'):
         self.contact_name = contact_name
         self.publickey = publickey
+        self.avatar = avatar
 
     def __repr__(self):
         return self.contact_name
@@ -42,7 +55,7 @@ class HistoryMessage(Base):
 class Repository():
 
     def __init__(self, name):
-        self.engine = create_engine('sqlite:///{}.db?check_same_thread=False'.format(name))
+        self.engine = create_engine('sqlite:///repository/db_client/{}.db?check_same_thread=False'.format(name))
         self.session = self.get_session()
         self.create_base()
 
@@ -59,8 +72,8 @@ class Repository():
         print('обавляем объект')
         self.session.commit()
 
-    def add_contact(self, name, publickey):
-        self.session.add(Contacts(name, publickey))
+    def add_contact(self, name, publickey, avatar):
+        self.session.add(Contacts(name, publickey, avatar= avatar))
 
     def del_model(self, model):
         models = self.session.query(model)
@@ -71,6 +84,12 @@ class Repository():
     def contacts_list(self):
         return self.session.query(Contacts).all()
 
+    def get_avatar(self):
+        return self.session.query(User).all()[0].avatar
+
+    def get_avatar_contact(self, username):
+        return self.session.query(Contacts).filter(Contacts.contact_name == username).first().avatar
+
     def get_history(self, name , username):
         return self.session.query(HistoryMessage).filter(((HistoryMessage.to_id == name) & (HistoryMessage.from_id == username)) | ((HistoryMessage.to_id == username) & (HistoryMessage.from_id == name))).all()
         # Исправить поиск истории пока ищет только сообщения написанные только клиентом, сообщения для него не ищет
@@ -79,10 +98,13 @@ class Repository():
         return self.session.query(Contacts).filter(Contacts.contact_name == name).first().publickey
 
 if __name__ == '__main__':
-    rep = Repository('pilik22')
-    # rep.add_obj(Contacts('pilik22'))
+    rep = Repository('pilik23')
+    # with open('ava.png', 'rb') as f:
+    #     file = f.read()
+    # rep.add_obj(User('pilik22', avatar= file))
     # rep.del_model(Contacts)
-    print(rep.contacts_list())
+    # print(rep.contacts_list())
     # for i in range(10):
     #     rep.add_contact('pilik{}'.format(i))
     # print(rep.get_history('pilik26')[0].message)
+    print(rep.get_avatar())

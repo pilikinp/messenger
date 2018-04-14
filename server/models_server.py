@@ -1,13 +1,12 @@
 import time
 import socket, select
 import logging
-import log_config
 import threading
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.exc import UnmappedInstanceError
 
-from models import JimAnswer, JimMessage, FilesRepository
-from models_repository_serv import Repository, Users, UserContacts, Chat, UsersChat, HistoryMessage
+from jim.models import JimAnswer, JimMessage, FilesRepository
+from repository.models_repository_serv import Repository, Users, Chat, UsersChat, HistoryMessage
 
 rep = Repository()
 
@@ -19,6 +18,7 @@ class Server(FilesRepository):
         self._host = host
         self._port = port
         self._sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto = 0)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
         self._sock.bind((host, port))
         self._sock.listen(clients)
         self._logger = logging.getLogger('app')
@@ -39,14 +39,16 @@ class Server(FilesRepository):
         super().__init__(clients_dict ={}, clients_list =[])
 
     def presence(self, *args):
-        sock, time_, ip, account_name, password, publickey = args
+        sock, time_, ip, account_name, password, avatar, publickey = args
         if rep.get_user(account_name) and rep.get_user(account_name).flag is False and \
                 rep.get_user(account_name).password == password:
             rep.login(time_, ip, account_name)
             self.add_user(account_name, sock)
             data = self.msg_server.msg('102', username= account_name)
             data = self.msg_server.pack(data)
+            print(data)
             sock.send(data)
+            print('сообщение отправлено')
             self._logger.debug('user: {} login'.format(account_name))
 
         elif rep.get_user(account_name) and rep.get_user(account_name).flag:
@@ -59,14 +61,15 @@ class Server(FilesRepository):
             sock.send(data)
 
     def registration(self, *args):
-        sock, time_, ip, account_name, password, publickey = args
+        sock, time_, ip, account_name, password, avatar, publickey = args
         if rep.get_user(account_name) is None:
-            rep.add(Users(account_name, password, publickey))
+            rep.add(Users(account_name, password, publickey, avatar))
             rep.login(time_, ip, account_name)
             self.add_user(account_name, sock)
             data = self.msg_server.msg('201')
             data = self.msg_server.pack(data)
             sock.send(data)
+            # sock.send(b'')
             self._logger.debug('user: {} login'.format(account_name))
         else:
             data = self.msg_server.msg('409')
@@ -86,16 +89,14 @@ class Server(FilesRepository):
         msg = self.msg_client.pack(msg)
         sock.send(msg)
 
-        # for key, value in self.clients_dict.items():
-        #     if value is sock:
-        #         name_a = key
         history = rep.get_history(name_a)
         for mes in history:
             msg = {'action': 'msg',
                    'time': mes.time_,
                    'to': mes.to_id,
                    'from': mes.from_id,
-                   'message': mes.message}
+                   'message': mes.message,
+                   'flag': mes.flag}
             msg = self.msg_client.pack(msg)
             sock.send(msg)
             print(msg)
@@ -110,11 +111,14 @@ class Server(FilesRepository):
     def search_contact(self, *args):
         sock, data = args[0], args[1]
         data = self.msg_client.unpack(data)
-        contacts = {'found_users': []}
+        contacts = {'found_users': {}}
         for contact in rep.get_all_user():
             if data['contact'].lower() in contact.username.lower():
-                contacts['found_users'].append(contact.username)
+                # contacts['found_users'].append(contact.username)
+                contacts['found_users']['{}'.format(contact.username)]=['',contact.avatar]
         contacts = self.msg_client.pack(contacts)
+        con = self.msg_client.unpack(contacts)
+        print('распакованные данные',con)
         sock.send(contacts)
 
     def get_chat_list(self, *args):
@@ -197,12 +201,14 @@ class Server(FilesRepository):
         if msg['to'] == '':
             requests[sock] = data
         elif rep.get_user(msg['to']) and rep.get_user(msg['to']).flag:
+            print('пересылаю сообщение')
             self.clients_dict[msg['to']].send(data)
         elif rep.get_user(msg['to']) and rep.get_user(msg['to']).flag is False:
+            print('адресат не в сети')
             data = self.msg_server.msg('410')
             data = self.msg_server.pack(data)
             sock.send(data)
-            rep.add(HistoryMessage(msg['time'], msg['from'], msg['to'], msg['message']))
+            rep.add(HistoryMessage(msg['time'], msg['from'], msg['to'], msg['message'], msg['flag']))
         else:
             data = self.msg_server.msg('404')
             data = self.msg_server.pack(data)
@@ -269,7 +275,13 @@ class Server(FilesRepository):
         requests = {}
         for sock in cl:
             try:
-                data = sock.recv(4096)
+                data = sock.recv(4096000)
+                # data = []
+                # while True:
+                #     packet = sock.recv(4096)
+                #     if not packet: break
+                #     data.append(packet)
+                # msg = self.msg_client.unpack(b''.join(data))
                 msg = self.msg_client.unpack(data)
                 print('что то пришло',msg)
                 # self.commands[msg['action']](sock, data, requests)
@@ -311,11 +323,18 @@ class Server(FilesRepository):
                 pass
                 # print('timeout вышел')  # timeout вышел
             else:
-                msg = sock.recv(4096)
+                msg = sock.recv(1024000)
+                # data = []
+                # while True:
+                #     packet = sock.recv(4096)
+                #     if not packet: break
+                #     data.append(packet)
                 print('сообщение принято')
+                # print(data)
+                # msg = self.msg_client.unpack(b''.join(data))
                 msg = self.msg_client.unpack(msg)
                 print(msg)
-                self.commands[msg['action']](sock, msg['time'], addr, msg['user'], msg['password'], msg['publickey'])
+                self.commands[msg['action']](sock, msg['time'], addr, msg['user'], msg['password'], msg['avatar'], msg['publickey'])
             finally:
                 wait = 0
                 r = []

@@ -1,7 +1,7 @@
 
 import sys
 from PyQt5 import Qt
-from gui import MyWindow
+from gui.gui import MyWindow
 
 app = Qt.QApplication(sys.argv)
 

@@ -3,10 +3,10 @@ import socket
 import threading, queue
 import hashlib
 
-from models import JimMessage, JimAnswer
-from models_repository_client import Repository, Contacts, HistoryMessage
+from jim.models import JimMessage, JimAnswer
+from repository.models_repository_client import Repository, Contacts, HistoryMessage, User
 
-import crypt
+import crypt.crypt as crypt
 
 
 class Client():
@@ -25,7 +25,7 @@ class Client():
     def socket(self):
         return self._sock
 
-    def connect_guest(self, action, password):
+    def connect_guest(self, action, password, file):
         pas = hashlib.sha256()
         pas.update(self.username.encode())
         pas.update(password.encode())
@@ -39,11 +39,24 @@ class Client():
                 'time': time.ctime(),
                 'user': self.username,
                 'password': password,
-                'publickey': publickey}
+                'publickey': publickey,
+                'avatar': file}
         self.socket.send(self.msg_client.pack(data))
         print('сообщение отправлено')
-        msg_recv = self.socket.recv(1024)
+        # ##################################
+        # data = b''
+        # while True:
+        #     packet = self.socket.recv(24)
+        #     print(packet)
+        #     if not packet:
+        #         break
+        #     data += packet
+        #     print(data)
+        # msg_recv = self.msg_server.unpack(data)
+        ##############################################
+        msg_recv = self.socket.recv(4096000)
         msg_recv = self.msg_server.unpack(msg_recv)
+
         print(msg_recv)
         if msg_recv['response'] == '102':
             print(msg_recv['alert'])
@@ -51,33 +64,34 @@ class Client():
             self.msg()
             print('запускаю получение контактов')
             self.get_contact_list(self.socket)
-            time.sleep(0.2)
+            time.sleep(0.2)# непонятная задержка которая нужна при JSON
             self.get_chat_list()
         elif msg_recv['response'] == '201':
             print(msg_recv['alert'])
             print('Вы зарегистрировались под ником {}'.format(self.username))
             self.rep = Repository(self.username)
+            self.rep.add_obj(User(self.username, avatar=file))
             self.msg()
             # self.get_contact_list(self.socket)
         # else:
         #     print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
         self.recv_queue.put(msg_recv)
 
-    def reg_guest(self):
-        data = {'action': 'registration',
-                'time': time.ctime(),
-                'user': self.username}
-        self.socket.send(self.msg_client.pack(data))
-        msg_recv = self.socket.recv(1024)
-        msg_recv = self.msg_server.unpack(msg_recv)
-        print(msg_recv)
-        if msg_recv['response'] == '201':
-            print(msg_recv['alert'])
-            print('Вы зарегистрировались под ником {}'.format(self.username))
-            self.rep = Repository(self.username)
-        else:
-            print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
-            sys.exit()
+    # def reg_guest(self):
+    #     data = {'action': 'registration',
+    #             'time': time.ctime(),
+    #             'user': self.username}
+    #     self.socket.send(self.msg_client.pack(data))
+    #     msg_recv = self.socket.recv(102400)
+    #     msg_recv = self.msg_server.unpack(msg_recv)
+    #     print(msg_recv)
+    #     if msg_recv['response'] == '201':
+    #         print(msg_recv['alert'])
+    #         print('Вы зарегистрировались под ником {}'.format(self.username))
+    #         self.rep = Repository(self.username)
+    #     else:
+    #         print('Возникла ошибка {} обратитесь к справке или напишите в поддержку'.format(msg_recv['response']))
+    #         sys.exit()
 
     def add_chat(self, chat_name):
         sock = self.socket
@@ -119,18 +133,19 @@ class Client():
 
     def search_contact(self, text):
         # некоректно работает поиск, требуется переделать!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        data = {'users': []}
+        data = {'users': {}}
         sock = self.socket
         for contact in self.rep.contacts_list():
             if text.lower() in contact.contact_name.lower():
-                data['users'].append(contact.contact_name)
+                # data['users'].append(contact.contact_name)
+                data['users']['{}'.format(contact.contact_name)]=['',contact.avatar]
         if data['users']:
             self.recv_queue.put(data)
         else:
             msg = {'action': 'search_contact',
                    'contact': text}
             msg = self.msg_client.pack(msg)
-            time.sleep(0.2)
+            time.sleep(0.2)# непонятная задержка которая нужна при JSON
             sock.send(msg)
 
 
@@ -179,9 +194,20 @@ class Client():
         cont_l = []
         while True:
             try:
-                sock.settimeout(2)
-                data = sock.recv(2048)
+                sock.settimeout(12)
+                data = sock.recv(1024000)
                 data = self.msg_server.unpack(data)
+                ######################################
+                # data = b''
+                # while True:
+                #     packet = sock.recv(4096)
+                #     print(packet)
+                #     if not packet:
+                #         break
+                #     data += packet
+                # print(data)
+                # data = self.msg_server.unpack(data)
+                ############################
                 print(data)
                 if 'action' in data:
                     if data['action'] == 'msg' and data['flag']:
@@ -197,8 +223,8 @@ class Client():
                     print('Кол-во контактов: ',len(data['users']))
                     # for cont in data['users']:
                     #     self.rep.add_contact(cont)
-                    for name, publickey in data['users'].items():
-                        self.rep.add_contact(name, publickey)
+                    for name, d in data['users'].items():
+                        self.rep.add_contact(name, d[0], d[1])
                     self.rep.session.commit()
                 elif 'found_users' in data:
                     data['users'] = data['found_users']
@@ -228,11 +254,11 @@ class Client():
         t1.join()
         t2.join()
 
-    def run(self, name, password, action):
+    def run(self, name, password, file, action):
         self.username = name
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self._host, self._port))
-        self.connect_guest(action, password)
+        self.connect_guest(action, password, file)
 
 
 

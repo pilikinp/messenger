@@ -1,109 +1,115 @@
-
 from Crypto.PublicKey import RSA
-
-# key generation Alisa
-privatekey = RSA.generate(2048)
-f = open('alisaprivatekey.txt','wb')
-f.write(bytes(privatekey.exportKey('PEM'))); f.close()
-publickey = privatekey.publickey()
-f = open('alisapublickey.txt','wb')
-f.write(bytes(publickey.exportKey('PEM'))); f.close()
-# key generation Bob
-privatekey = RSA.generate(2048)
-f = open('bobprivatekey.txt','wb')
-f.write(bytes(privatekey.exportKey('PEM'))); f.close()
-publickey = privatekey.publickey()
-f = open('bobpublickey.txt','wb')
-f.write(bytes(publickey.exportKey('PEM'))); f.close()
-######################################################
-
 from Crypto.Signature import PKCS1_v1_5
 from Crypto.Hash import SHA
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
-
-# creation of signature
-# f = open('c:\cipher\plaintext.txt','rb')
-plaintext = b'qwerty'
-privatekey = RSA.importKey(open('alisaprivatekey.txt','rb').read())
-myhash = SHA.new(plaintext)
-signature = PKCS1_v1_5.new(privatekey)
-signature = signature.sign(myhash)
-# signature encrypt
-publickey = RSA.importKey(open('bobpublickey.txt','rb').read())
-cipherrsa = PKCS1_OAEP.new(publickey)
-sig = cipherrsa.encrypt(signature[:128])
-sig = sig + cipherrsa.encrypt(signature[128:])
-f = open('signature.txt','wb')
-f.write(bytes(sig)); f.close()
-############################################################
-from Crypto.Cipher import AES
+import Crypto
+from Crypto.Cipher import PKCS1_OAEP, AES
 from Crypto import Random
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
+import sys, time, json
+import pickle
 
-# creation 256 bit session key
-sessionkey = Random.new().read(32) # 256 bit
-# encryption AES of the message
-f = open('plaintext.txt','rb')
-plaintext = f.read(); f.close()
-print(plaintext)
-iv = Random.new().read(16) # 128 bit
-obj = AES.new(sessionkey, AES.MODE_CFB, iv)
-ciphertext = iv + obj.encrypt(plaintext)
-print(ciphertext)
-f = open('plaintext.txt','wb')
-f.write(bytes(ciphertext)); f.close()
-# encryption RSA of the session key
-publickey = RSA.importKey(open('bobpublickey.txt','rb').read())
-cipherrsa = PKCS1_OAEP.new(publickey)
-sessionkey = cipherrsa.encrypt(sessionkey)
-f = open('sessionkey.txt','wb')
-f.write(bytes(sessionkey)); f.close()
 
-####################################################################
+def create_rsa(username):
+    """ функция создания пары ключей: приватного и публичного
+    username - пользователь который шифрует сообщение"""
 
-from Crypto.Cipher import AES
-from Crypto import Random
-from Crypto.Cipher import PKCS1_OAEP
-from Crypto.PublicKey import RSA
+    privatekey = RSA.generate(2048)
+    with open('crypt/key/{}privatekey.txt'.format(username), 'wb') as f:
+        f.write(bytes(privatekey.exportKey('PEM')))
+    publickey = privatekey.publickey()
+    with open('crypt/key/{}publickey.txt'.format(username), 'wb') as f:
+        f.write(bytes(publickey.exportKey('PEM')))
+    return publickey.exportKey('PEM').decode()
 
-# decryption session key
-privatekey = RSA.importKey(open('bobprivatekey.txt','rb').read())
-cipherrsa = PKCS1_OAEP.new(privatekey)
-f = open('sessionkey.txt','rb')
-sessionkey = f.read(); f.close()
-sessionkey = cipherrsa.decrypt(sessionkey)
-# decryption message
-f = open('plaintext.txt','rb')
-ciphertext = f.read(); f.close()
-iv = ciphertext[:16]
-obj = AES.new(sessionkey, AES.MODE_CFB, iv)
-plaintext = obj.decrypt(ciphertext)
-plaintext = plaintext[16:]
-print(plaintext)
-f = open('plaintext.txt','wb')
-f.write(bytes(plaintext)); f.close()
+def create_msg(plaintext, publickey):
+    '''функция создания шифрованного сообщения
+    plaintext - сообщение которое нужно зашифровать
+    username - пользователь который шифрует сообщение
+    publickey - публичный ключ пользователя, которому предназначено сообщение'''
 
-#########################################################################
+    sessionkey = Random.new().read(32)
+    iv = Random.new().read(16)# попробовать сделать без вектора инициализации (iv)
+    obj = AES.new(sessionkey, AES.MODE_CFB, iv)
+    ciphertext = iv + obj.encrypt(plaintext.encode())
+    publickey = RSA.importKey(publickey)
+    cipherrsa = PKCS1_OAEP.new(publickey)
+    sessionkey = cipherrsa.encrypt(sessionkey)
+    data = {'session key': sessionkey,
+           'message': ciphertext}
+    return data
 
-from Crypto.Signature import PKCS1_v1_5
-from Crypto.Hash import SHA
-from Crypto.PublicKey import RSA
-from Crypto.Cipher import PKCS1_OAEP
+def decript_sessionkey(sessionkey, username):
+    '''функция дешифровки ключа
+    sesionkey - ключ зашифрованный с помощью публичного ключа
+    username - пользователь который производит дешифровку'''
+    print('начинаем расшифровку ключа')
+    privatekey = RSA.importKey(open('crypt/key/{}privatekey.txt'.format(username), 'rb').read())
+    cipherrsa = PKCS1_OAEP.new(privatekey)
+    print('расшифровываем')
+    sessionkey = cipherrsa.decrypt(sessionkey)
+    print('спех')
+    return sessionkey
 
-# decryption signature
-f = open('signature.txt','rb')
-signature = f.read(); f.close()
-privatekey = RSA.importKey(open('bobprivatekey.txt','rb').read())
-cipherrsa = PKCS1_OAEP.new(privatekey)
-sig = cipherrsa.decrypt(signature[:256])
-sig = sig + cipherrsa.decrypt(signature[256:])
-# signature verification
-f = open('plaintext.txt','rb')
-plaintext = f.read(); f.close()
-publickey = RSA.importKey(open('alisapublickey.txt','rb').read())
-myhash = SHA.new(plaintext)
-signature = PKCS1_v1_5.new(publickey)
-test = signature.verify(myhash, sig)
+def decript_msg(msg, username):
+    '''функция дешифровки сообщения
+    msg - полученное сообщение
+    username - пользователь который производит дешифровку'''
+    sessionkey = decript_sessionkey(msg['session key'], username)
+    print(sessionkey)
+    iv = msg['message'][:16]
+    obj = AES.new(sessionkey, AES.MODE_CFB, iv)
+    plaintext = obj.decrypt(msg['message'])
+    plaintext = plaintext[16:]
+    return plaintext
+
+def get_publickey(username):
+    publickey = open('crypt/key/{}publickey.txt'.format(username), 'r').read()
+    return publickey
+
+if __name__ == '__main__':
+    # publickey = get_publickey('pilik')
+    # data = {'action': 'registration',
+    #         'time': time.ctime(),
+    #         'user': 'username',
+    #         'password': 'wrfwefwefuih4u3ithwf23ru3u3h3h32rhu2hr3uh23ur32hi92',
+    #         'publickey': publickey}
+    # print(data)
+    # data = json.dumps(data).encode()
+    # print(sys.getsizeof(data))
+
+    plaintext = 'qwertrewq'
+    username = 'pilik'
+    # signature = create_signature(plaintext, username)
+    # publickey = get_publickey(username)
+    publickey = open('crypt/key/{}publickey.txt'.format(username), 'rb').read()
+    # data = create_msg(plaintext, username, publickey)
+    # print(data)
+    # print('########################################')
+    sessionkey = Random.new().read(32)
+    print(sessionkey)
+    iv = Random.new().read(16)  # попробовать сделать без вектора инициализации (iv)
+    obj = AES.new(sessionkey, AES.MODE_CFB, iv)
+    ciphertext = iv + obj.encrypt(plaintext.encode())
+    print(ciphertext, 'зашифрованный текст')
+    # sig = create_signature(plaintext, username)
+    # print(sig, 'подпись')
+    # ciphersig = obj.encrypt(sig)  # нужен ли здесь iv
+    # print(ciphersig, 'одпись')
+    publickey = RSA.importKey(publickey)
+    cipherrsa = PKCS1_OAEP.new(publickey)
+    sessionkey = cipherrsa.encrypt(sessionkey)
+    data = {'session key': sessionkey,
+           'message': ciphertext}
+
+    # data = str(data)
+    # print(data['session key'])
+    # data = json.dumps('ssdsdaf').encode()+ data['session key']
+    # print(data)
+    # data = json.loads(data.decode())
+    # sessionkey = decript_sessionkey(data['session key'], username)
+    ms = decript_msg(data, username)
+    print(ms)
+    # message = data['message']
+    # sessionkey = data['session key']
+    # signature = data['signature']
+
 
