@@ -84,6 +84,9 @@ class Repository():
     def contacts_list(self):
         return self.session.query(Contacts).all()
 
+    def get_contact(self, name):
+        return self.session.query(Contacts).filter(Contacts.contact_name == name).first()
+
     def get_avatar(self):
         return self.session.query(User).all()[0].avatar
 

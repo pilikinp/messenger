@@ -18,7 +18,7 @@ class Server(FilesRepository):
         self._host = host
         self._port = port
         self._sock = socket.socket(family = socket.AF_INET, type = socket.SOCK_STREAM, proto = 0)
-        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
+        # self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4096)
         self._sock.bind((host, port))
         self._sock.listen(clients)
         self._logger = logging.getLogger('app')
@@ -93,10 +93,10 @@ class Server(FilesRepository):
         for mes in history:
             msg = {'action': 'msg',
                    'time': mes.time_,
-                   'to': mes.to_id,
+                   'data':{'to': mes.to_id,
                    'from': mes.from_id,
                    'message': mes.message,
-                   'flag': mes.flag}
+                   'flag': mes.flag}}
             msg = self.msg_client.pack(msg)
             sock.send(msg)
             print(msg)

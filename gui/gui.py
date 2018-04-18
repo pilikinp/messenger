@@ -10,8 +10,7 @@ from PIL.ImageQt import ImageQt
 
 from jim.models import JimMessage, JimAnswer
 from client.models_client import Client
-
-
+# from client.async_client import Client #не разобрался как сделать, зависает в ожидание посылок от сервера
 class MyWindow(QtWidgets.QMainWindow):
 
     flag = False
@@ -113,34 +112,35 @@ class MyWindow(QtWidgets.QMainWindow):
     def chat(self):
         self.ui.listWidget_message.clear()
         name = self.ui.listWidget_contacts.currentItem().text()
-        avatar = self.monitor.client.rep.get_avatar_contact(name)
-        pixmap = QtGui.QImage.fromData(avatar)
-        pixmap = QtGui.QPixmap.fromImage(pixmap)
+        if self.monitor.client.rep.get_contact(name):
+            avatar = self.monitor.client.rep.get_avatar_contact(name)
+            pixmap = QtGui.QImage.fromData(avatar)
+            pixmap = QtGui.QPixmap.fromImage(pixmap)
 
-        self.ui.listWidget_contacts.currentItem().setIcon(QIcon(pixmap))
+            self.ui.listWidget_contacts.currentItem().setIcon(QIcon(pixmap))
 
-        history = self.monitor.client.rep.get_history(name, self.monitor.client.username)
-        print(history)
-        for his in history:
-            # self.ui.listWidget_message.addItem('{} - {} - {}'.format(his.time_, his.from_id, his.message))
-            item = QtWidgets.QListWidgetItem()
+            history = self.monitor.client.rep.get_history(name, self.monitor.client.username)
+            print(history)
+            for his in history:
+                # self.ui.listWidget_message.addItem('{} - {} - {}'.format(his.time_, his.from_id, his.message))
+                item = QtWidgets.QListWidgetItem()
 
-            widget = QtWidgets.QWidget()
-            widgetText = QtWidgets.QLabel(his.message)
-            widgetTime = QtWidgets.QLabel(his.time_)
-            widgetName = QtWidgets.QLabel(his.from_id)
-            widgetLayout = QtWidgets.QHBoxLayout()
-            widgetLayout.addWidget(widgetTime)
-            widgetLayout.addWidget(widgetName)
-            widgetLayout.addWidget(widgetText)
+                widget = QtWidgets.QWidget()
+                widgetText = QtWidgets.QLabel(his.message)
+                widgetTime = QtWidgets.QLabel(his.time_)
+                widgetName = QtWidgets.QLabel(his.from_id)
+                widgetLayout = QtWidgets.QHBoxLayout()
+                widgetLayout.addWidget(widgetTime)
+                widgetLayout.addWidget(widgetName)
+                widgetLayout.addWidget(widgetText)
 
-            widgetLayout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
-            widget.setLayout(widgetLayout)
-            item.setSizeHint(widget.sizeHint())
+                widgetLayout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+                widget.setLayout(widgetLayout)
+                item.setSizeHint(widget.sizeHint())
 
-            self.ui.listWidget_message.addItem(item)
-            self.ui.listWidget_message.setItemWidget(item, widget)
-            self.ui.listWidget_message.scrollToBottom()
+                self.ui.listWidget_message.addItem(item)
+                self.ui.listWidget_message.setItemWidget(item, widget)
+                self.ui.listWidget_message.scrollToBottom()
 
 
     def get_contacts(self):
@@ -212,14 +212,44 @@ class MyWindow(QtWidgets.QMainWindow):
                 self.ui.textEdit_message.clear()
                 self.ui.textEdit_message.setFocus()
             else:
-                pass
+                message = self.ui.textEdit_message.toHtml()
+                to_ = ''
+                print(to_)
+                # поменять способ добавления контактов, сделать чтобы контакты добавлялись
+                # если написать им сообщение или получить сообщение
+                item = QtWidgets.QListWidgetItem()
+
+                widget = QtWidgets.QWidget()
+                widgetText = QtWidgets.QLabel(message)
+                widgetName = QtWidgets.QLabel(self.monitor.client.username)
+                widgetTime = QtWidgets.QLabel(time.ctime())
+                widgetLayout = QtWidgets.QHBoxLayout()
+                widgetLayout.addWidget(widgetTime)
+                widgetLayout.addWidget(widgetName)
+                widgetLayout.addWidget(widgetText)
+                # widgetLayout.addStretch()
+
+                widgetLayout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+                widget.setLayout(widgetLayout)
+                item.setSizeHint(widget.sizeHint())
+
+                self.ui.listWidget_message.addItem(item)
+                self.ui.listWidget_message.setItemWidget(item, widget)
+
+                self.ui.listWidget_message.scrollToBottom()
+                self.monitor.client._send_message(
+                    self.monitor.client.socket, to_, message, self.monitor.client.username,
+                    self.ui.security.isChecked())
+                self.ui.textEdit_message.clear()
+                self.ui.textEdit_message.setFocus()
             # Добавить отправку сообщений в чаты
         except AttributeError:
             self.ui.console.addItem('Не выбран контакт')
 
     @QtCore.pyqtSlot(dict)
-    def update_message(self, data):
-        if self.ui.listWidget_contacts.currentItem() and self.ui.listWidget_contacts.currentItem().text() == data['from']:
+    def update_message(self, data_recv):
+        data = data_recv['data']
+        if self.ui.listWidget_contacts.currentItem() and self.ui.listWidget_contacts.currentItem().text() == data['from'] and self.ui.tabContacts.currentIndex() == 0:
             ##########################
             #сделать отдельной функцией
             item = QtWidgets.QListWidgetItem()
@@ -227,7 +257,7 @@ class MyWindow(QtWidgets.QMainWindow):
             widget = QtWidgets.QWidget()
             widgetText = QtWidgets.QLabel(data['message'])
             widgetName = QtWidgets.QLabel(data['from'])
-            widgetTime = QtWidgets.QLabel(data['time'])
+            widgetTime = QtWidgets.QLabel(data_recv['time'])
             widgetLayout = QtWidgets.QHBoxLayout()
             widgetLayout.addWidget(widgetTime)
             widgetLayout.addWidget(widgetName)
@@ -249,11 +279,11 @@ class MyWindow(QtWidgets.QMainWindow):
 
     @QtCore.pyqtSlot(dict)
     def update_console(self, data):
-        self.ui.console.addItem('{} - {} - {}'.format(data['response'], data['time'], data['alert']))
+        self.ui.console.addItem('{} - {} - {}'.format(data['response'], data['time'], data['data']['alert']))
         self.ui.console.scrollToBottom()
         if data['response'] == '102':
-            self.setWindowTitle('Messenger - {}'.format(data['user']))
-        self.ui.statusbar.showMessage('{} - {} - {}'.format(data['response'], data['time'], data['alert']))
+            self.setWindowTitle('Messenger - {}'.format(data['data']['user']))
+        self.ui.statusbar.showMessage('{} - {} - {}'.format(data['response'], data['time'], data['data']['alert']))
         # if data['response'] == '402':
         #     self.thread.quit()
         #     print('поток остановлен') Надо ли останавливать потое?? Если вход не выполнен и будет попытка повторного входа
@@ -272,9 +302,32 @@ class MyWindow(QtWidgets.QMainWindow):
 
 
     @QtCore.pyqtSlot(dict)
-    def update_chats(self, data):
-        for chatname in data['chats']:
-            self.ui.listWidget_chat.addItem(str(chatname))
+    def update_chats(self, data_recv):
+        data = data_recv['data']
+        if self.ui.tabContacts.currentIndex() == 1:
+            item = QtWidgets.QListWidgetItem()
+
+            widget = QtWidgets.QWidget()
+            widgetText = QtWidgets.QLabel(data['message'])
+            widgetName = QtWidgets.QLabel(data['from'])
+            widgetTime = QtWidgets.QLabel(data_recv['time'])
+            widgetLayout = QtWidgets.QHBoxLayout()
+            widgetLayout.addWidget(widgetTime)
+            widgetLayout.addWidget(widgetName)
+            widgetLayout.addWidget(widgetText)
+            # widgetLayout.addStretch()
+
+            widgetLayout.setSizeConstraint(QtWidgets.QLayout.SetFixedSize)
+            widget.setLayout(widgetLayout)
+            item.setSizeHint(widget.sizeHint())
+            ##################################################
+            self.ui.listWidget_message.addItem(item)
+            self.ui.listWidget_message.setItemWidget(item, widget)
+            ################################
+            self.ui.listWidget_message.scrollToBottom()
+
+        else:
+            print('чат')
 
     def on_lineEditSearch_textChanged(self):
         try:
@@ -287,7 +340,7 @@ class MyWindow(QtWidgets.QMainWindow):
 # перенести все диалоговые окна и работу с ними в отдельные скрипты
     def login(self, action):
 
-        dialog = uic.loadUi('gui/icon/dial.ui')
+        dialog = uic.loadUi('gui/dial.ui')
         file = ''
         self.monitor.moveToThread(self.thread)
         self.thread.started.connect(self.monitor.recv_msg)
@@ -304,7 +357,7 @@ class MyWindow(QtWidgets.QMainWindow):
         dialog.exec()
 
     def registration(self):
-        dialog = uic.loadUi('gui/icon/reg_form.ui')
+        dialog = uic.loadUi('gui/reg_form.ui')
         with open('gui/icon/ava.png', 'rb') as f:
             dialog.file = f.read()
             print(dialog.file)
@@ -350,7 +403,7 @@ class MyWindow(QtWidgets.QMainWindow):
         dialog.exec()
 
     def profile(self):
-        dialog = uic.loadUi('gui/icon/profile.ui')
+        dialog = uic.loadUi('gui/profile.ui')
         file = self.monitor.client.rep.get_avatar()
         dialog.pixmap = QtGui.QImage.fromData(file)
         dialog.pixmap = QtGui.QPixmap.fromImage(dialog.pixmap)
@@ -442,6 +495,8 @@ class Monitor(QtCore.QObject):
             print(data)
             if 'action' in data and data['action'] == 'msg':
                 self.gotData.emit(data)
+            elif 'action' in data and data['action'] =='chat':
+                self.gotChat.emit(data)
             elif 'response' in data:
                 self.gotResp.emit(data)
             elif 'users' in data:

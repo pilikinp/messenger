@@ -193,7 +193,8 @@ class Repository:
         self.session.commit()
 
     def get_user_contacts(self,user_name):
-        data = {'users': {}}
+        data = {'users': {},
+                'data':{}}
         id = self.session.query(Users).filter_by(username= user_name).first().id
         print(id)
         result = self.session.query(UserContacts).filter_by(id_user= id).all()
