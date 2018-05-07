@@ -1,0 +1,20 @@
+#: import Header widgets.header
+
+
+
+<Chat>
+    FloatLayout
+        canvas.before:
+            Color:
+                rgba: 1,1,1,1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+
+        Header:
+            text: root.title
+
+        BoxLayout:
+            orientation: horizontal
+

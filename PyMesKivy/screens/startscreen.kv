@@ -1,0 +1,37 @@
+
+
+<BaseScreen>:
+    orientation: 'vertical'
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(5), dp(20)
+
+
+        Image:
+            source: 'data/image/logo.png'
+            size_hint: None, None
+            size: dp(150), dp(150)
+            pos_hint: {'center_x': .5}
+
+        Label:
+            text: "Чтобы начать общаться войдите или зарегистрируйтесь"
+            markup: True
+            color:  app.theme_cls.primary_color
+            size_hint_y: None
+            valign: 'top'
+            height: dp(250)
+
+        Widget:
+
+        BoxLayout:
+
+            Button:
+                text: 'Create account'
+                size: dp(250), dp(250)
+                on_release: app.switch_screen('reg')
+
+
+            Button:
+                text: 'login'
+                theme_text_color: 'Primary'

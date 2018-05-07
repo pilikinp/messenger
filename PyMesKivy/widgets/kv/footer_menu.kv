@@ -1,0 +1,31 @@
+<FooterMenuButton@Button>
+    background_normal: ''
+    background_color: 1,1,1,1
+    background_down: ''
+    color: 0,0,0,1
+
+<FooterMenu>
+    size_hint: 1, 0.1
+    pos_hint: {'center_x': 0.5, 'center_y': 0.05}
+
+    Widget:
+        size_hint: 1, 0.2
+        pos_hint: {'center_x': 0.5, 'center_y': 0.9}
+        canvas:
+            Color:
+                rgb: 0.8,0.8,0.8
+            Rectangle:
+                pos: 0, self.center_y
+                size: self.width, 2
+
+    BoxLayout:
+        size_hint: 1, 0.8
+        pos_hint: {'center_x': 0.5, 'center_y': 0.47}
+        FooterMenuButton:
+            text: 'Login'
+            on_press: root.switch_screen('main')
+
+        FooterMenuButton:
+            text: 'Registration'
+            on_press: root.switch_screen('reg')
+
