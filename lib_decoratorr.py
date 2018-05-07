@@ -17,3 +17,6 @@ def log(func):
         return callf
     else:
         return func
+
+def login_required(func):
+    pass

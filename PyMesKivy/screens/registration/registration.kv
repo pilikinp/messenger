@@ -1,0 +1,81 @@
+
+<RegScreen>:
+    orientation: 'vertical'
+
+    BoxLayout:
+        orientation: 'vertical'
+        size_hint: 1, 0.8
+        pos_hint: {'center_x': .5, 'center_y': 0.5}
+        padding: 7
+        spacing: 7
+
+        Button:
+            text: 'Ok'
+            size_hint: None, None
+            size: dp(50), dp(25)
+            opposite_colors: True
+            elevation_normal: 8
+            pos_hint: {'center_x': .97, 'center_y': 0.1}
+
+        Image:
+            id: avatar
+            pos_hint: {'center_y': 0.2}
+            source: 'data/image/avatar_empty.png'
+
+
+
+
+
+        BoxLayout:
+            orientation: 'vertical'
+
+
+
+            GridLayout:
+                rows: 3
+                cols: 2
+                spacing: 10
+                Label:
+                    text: 'Login:'
+                    markup: True
+                    color:  [255,255,255,255]
+                    size_hint: .2, None
+                    size: dp(0), dp(30)
+                TextInput:
+                    id: name_field
+                    multiline: False
+                    hint_text: 'Введите логин'
+                    size_hint: 0.8, None
+                    size: dp(0), dp(30)
+
+
+
+                Label:
+                    text: 'Password:'
+                    markup: True
+                    color:  [255,255,255,255]
+                    size_hint: .2, None
+                    size: dp(0), dp(30)
+                TextInput:
+                    id: name_field
+                    multiline: False
+                    hint_text: 'Введите пароль'
+                    size_hint: .2, None
+                    size: dp(0), dp(30)
+
+
+                Label:
+                    text: 'Password:'
+                    markup: True
+                    color:  [255,255,255,255]
+                    size_hint: .2, None
+                    size: dp(0), dp(30)
+                TextInput:
+                    id: name_field
+                    multiline: False
+                    hint_text: 'Подтвердите пароль'
+                    size_hint: 0.6, None
+                    size: dp(0), dp(30)
+
+
+
