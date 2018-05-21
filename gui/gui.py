@@ -486,7 +486,7 @@ class Monitor(QtCore.QObject):
         super().__init__()
 
         self.parent = parent
-        self.client = Client('127.0.0.1', 7777)
+        self.client = Client('185.189.12.43', 7777)
         self.resv_queue = self.client.recv_queue
 
     def recv_msg(self):

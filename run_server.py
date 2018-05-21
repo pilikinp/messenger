@@ -5,7 +5,7 @@ from server import models_server, acync_serv
 # server.main_loop()
 
 loop = asyncio.get_event_loop()
-coro = loop.create_server(acync_serv.EchoServerClientProtocol, '127.0.0.1', 7777)
+coro = loop.create_server(acync_serv.EchoServerClientProtocol, '185.189.12.43', 7777)
 server = loop.run_until_complete(coro)
 
 print('Serving on {}'.format(server.sockets[0].getsockname()))
