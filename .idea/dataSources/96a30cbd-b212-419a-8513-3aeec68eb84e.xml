@@ -23,18 +23,17 @@
     <table id="13" parent="2" name="users"/>
     <column id="14" parent="6" name="id">
       <Position>1</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
       <SequenceIdentity>1</SequenceIdentity>
     </column>
     <column id="15" parent="6" name="chat_name">
       <Position>2</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
       <NotNull>1</NotNull>
     </column>
     <index id="16" parent="6" name="sqlite_autoindex_Chat_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>chat_name</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="17" parent="6">
@@ -47,24 +46,24 @@
     </key>
     <column id="19" parent="7" name="id">
       <Position>1</Position>
-      <DataType>INTEGER|0</DataType>
+      <DataType>INTEGER|0s</DataType>
       <NotNull>1</NotNull>
     </column>
     <column id="20" parent="7" name="time_">
       <Position>2</Position>
-      <DataType>VARCHAR|0</DataType>
+      <DataType>VARCHAR|0s</DataType>
     </column>
     <column id="21" parent="7" name="from_id">
       <Position>3</Position>
-      <DataType>VARCHAR|0</DataType>
+      <DataType>VARCHAR|0s</DataType>
     </column>
     <column id="22" parent="7" name="to_id">
       <Position>4</Position>
-      <DataType>VARCHAR|0</DataType>
+      <DataType>VARCHAR|0s</DataType>
     </column>
     <column id="23" parent="7" name="message">
       <Position>5</Position>
-      <DataType>VARCHAR|0</DataType>
+      <DataType>VARCHAR|0s</DataType>
     </column>
     <key id="24" parent="7">
       <ColNames>id</ColNames>
@@ -72,23 +71,21 @@
     </key>
     <column id="25" parent="8" name="id">
       <Position>1</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
       <SequenceIdentity>1</SequenceIdentity>
     </column>
     <column id="26" parent="8" name="chat_id">
       <Position>2</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
     </column>
     <column id="27" parent="8" name="user_id">
       <Position>3</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
     </column>
     <index id="28" parent="8" name="sqlite_autoindex_UsersChat_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>chat_id
 user_id</ColNames>
-      <ColumnCollations>
-</ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="29" parent="8">
@@ -112,16 +109,16 @@ user_id</ColNames>
     </foreign-key>
     <column id="33" parent="9" name="id">
       <Position>1</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
       <SequenceIdentity>1</SequenceIdentity>
     </column>
     <column id="34" parent="9" name="time">
       <Position>2</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
     </column>
     <column id="35" parent="9" name="id_user">
       <Position>3</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
     </column>
     <key id="36" parent="9">
       <ColNames>id</ColNames>
@@ -134,23 +131,23 @@ user_id</ColNames>
     </foreign-key>
     <column id="38" parent="10" name="type">
       <Position>1</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
     </column>
     <column id="39" parent="10" name="name">
       <Position>2</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
     </column>
     <column id="40" parent="10" name="tbl_name">
       <Position>3</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
     </column>
     <column id="41" parent="10" name="rootpage">
       <Position>4</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
     </column>
     <column id="42" parent="10" name="sql">
       <Position>5</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
     </column>
     <column id="43" parent="11" name="name">
       <Position>1</Position>
@@ -160,23 +157,21 @@ user_id</ColNames>
     </column>
     <column id="45" parent="12" name="id">
       <Position>1</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
       <SequenceIdentity>1</SequenceIdentity>
     </column>
     <column id="46" parent="12" name="id_user">
       <Position>2</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
     </column>
     <column id="47" parent="12" name="id_contact">
       <Position>3</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
     </column>
     <index id="48" parent="12" name="sqlite_autoindex_user_contacts_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>id_user
 id_contact</ColNames>
-      <ColumnCollations>
-</ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="49" parent="12">
@@ -200,32 +195,31 @@ id_contact</ColNames>
     </foreign-key>
     <column id="53" parent="13" name="id">
       <Position>1</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
       <SequenceIdentity>1</SequenceIdentity>
     </column>
     <column id="54" parent="13" name="username">
       <Position>2</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
     </column>
     <column id="55" parent="13" name="password">
       <Position>3</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
       <NotNull>1</NotNull>
     </column>
     <column id="56" parent="13" name="publickey">
       <Position>4</Position>
-      <DataType>text|0</DataType>
+      <DataType>text|0s</DataType>
       <NotNull>1</NotNull>
     </column>
     <column id="57" parent="13" name="flag">
       <Position>5</Position>
-      <DataType>integer|0</DataType>
+      <DataType>integer|0s</DataType>
       <NotNull>1</NotNull>
     </column>
     <index id="58" parent="13" name="sqlite_autoindex_users_1">
       <NameSurrogate>1</NameSurrogate>
       <ColNames>username</ColNames>
-      <ColumnCollations></ColumnCollations>
       <Unique>1</Unique>
     </index>
     <key id="59" parent="13">
